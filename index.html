@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#17110e" />
+  <title>Coffee Timer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="timer-card">
+    <h1>Coffee Timer</h1>
+
+    <p class="current-step" id="current-step" aria-live="polite">現在：蒸らし</p>
+
+    <section class="timer-display" aria-label="残り時間">
+      <time id="time-display" datetime="PT1M">01:00</time>
+    </section>
+
+    <p class="status" id="status-text" aria-live="polite">準備完了</p>
+
+    <div class="controls" aria-label="タイマー操作">
+      <button id="start-button" class="control-button start" type="button" aria-label="開始">▶</button>
+      <button id="pause-button" class="control-button" type="button" aria-label="一時停止">⏸</button>
+      <button id="reset-button" class="control-button" type="button" aria-label="リセット">■</button>
+    </div>
+
+    <div class="step-selector">
+      <div class="preset-field">
+        <label class="visually-hidden" for="timer-preset">抽出メニュー</label>
+        <select id="timer-preset"></select>
+      </div>
+      <button id="edit-button" class="edit-button" type="button" aria-expanded="false" aria-controls="step-editor">
+        編集
+      </button>
+    </div>
+
+    <section id="step-editor" class="step-editor" aria-labelledby="editor-title" hidden>
+      <div class="editor-heading">
+        <h2 id="editor-title">メニュー編集</h2>
+        <button id="new-menu-button" class="text-button" type="button">新規メニュー</button>
+      </div>
+
+      <label class="menu-name-field">
+        <span>メニュー名</span>
+        <input id="menu-name" type="text" maxlength="30" required />
+      </label>
+
+      <div id="step-list" class="step-list"></div>
+
+      <button id="add-step-button" class="add-step-button" type="button" aria-label="工程を追加">＋</button>
+      <button id="save-menu-button" class="save-button" type="button">記録</button>
+      <p id="editor-message" class="editor-message" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script src="main.js"></script>
+</body>
+</html>
