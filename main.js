@@ -28,7 +28,7 @@ const MAX_MINUTES = 99;
 const ALERT_SOUND_KEYS = ["bell", "wood", "soft", "none"];
 const BGM_TRACKS = {
   none: null,
-  "morning-coffee": "assets/music/morning-coffee.mp3",
+  "morning-coffee": "assets/music/morningcoffee.mp3",
   "cafe-jazz": "assets/music/cafe-jazz.mp3",
   rain: "assets/music/rain.mp3",
   lofi: "assets/music/lofi.mp3"
