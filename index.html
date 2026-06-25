@@ -23,6 +23,14 @@
       <button id="start-button" class="control-button start" type="button" aria-label="開始">▶</button>
       <button id="pause-button" class="control-button" type="button" aria-label="一時停止">⏸</button>
       <button id="reset-button" class="control-button" type="button" aria-label="リセット">■</button>
+      <button
+        id="sound-settings-button"
+        class="control-button sound"
+        type="button"
+        aria-label="音設定を開く"
+        aria-expanded="false"
+        aria-controls="sound-settings"
+      >♪</button>
     </div>
 
     <div class="step-selector">
@@ -35,40 +43,76 @@
       </button>
     </div>
 
-    <section class="sound-settings" aria-labelledby="sound-settings-title">
-      <h2 id="sound-settings-title">音設定</h2>
+    <section id="sound-settings" class="sound-settings" aria-labelledby="sound-settings-title" hidden>
+      <div class="sound-settings-heading">
+        <h2 id="sound-settings-title">音設定</h2>
+        <button id="sound-settings-close" class="sound-close-button" type="button" aria-label="音設定を閉じる">×</button>
+      </div>
 
-      <label class="sound-setting-row" for="alert-sound">
-        <span>通知音</span>
-        <select id="alert-sound">
-          <option value="bell">Bell</option>
-          <option value="wood">Wood</option>
-          <option value="soft">Soft</option>
-          <option value="none">None</option>
-        </select>
-      </label>
+      <div class="sound-group">
+        <h3>通知音</h3>
 
-      <div class="sound-setting-row">
-        <span>BGM</span>
-        <label class="toggle-switch">
-          <input id="bgm-enabled" type="checkbox" />
-          <span class="toggle-track" aria-hidden="true"></span>
-          <span class="toggle-label">OFF</span>
+        <div class="sound-setting-row">
+          <span>通知音</span>
+          <label class="toggle-switch">
+            <input id="alert-enabled" type="checkbox" aria-label="通知音のON/OFF" />
+            <span class="toggle-track" aria-hidden="true"></span>
+            <span id="alert-toggle-label" class="toggle-label">ON</span>
+          </label>
+        </div>
+
+        <label class="sound-setting-row" for="alert-sound">
+          <span>種類</span>
+          <select id="alert-sound">
+            <option value="bell">Bell</option>
+            <option value="wood">Wood</option>
+            <option value="soft">Soft</option>
+          </select>
+        </label>
+
+        <label class="sound-setting-row volume-row" for="alert-volume">
+          <span>音量</span>
+          <span class="volume-control">
+            <input id="alert-volume" type="range" min="0" max="100" step="1" />
+            <output id="alert-volume-value" for="alert-volume">70</output>
+          </span>
         </label>
       </div>
 
-      <label class="sound-setting-row" for="bgm-track">
-        <span>曲</span>
-        <select id="bgm-track">
-          <option value="none">None</option>
-          <option value="morning-coffee">Morning Coffee</option>
-          <option value="cafe-jazz">Cafe Jazz</option>
-          <option value="rain">Rain</option>
-          <option value="lofi">Lo-Fi</option>
-        </select>
-      </label>
+      <div class="sound-group">
+        <h3>曲</h3>
+
+        <div class="sound-setting-row">
+          <span>BGM</span>
+          <label class="toggle-switch">
+            <input id="bgm-enabled" type="checkbox" aria-label="BGMのON/OFF" />
+            <span class="toggle-track" aria-hidden="true"></span>
+            <span id="bgm-toggle-label" class="toggle-label">OFF</span>
+          </label>
+        </div>
+
+        <label class="sound-setting-row" for="bgm-track">
+          <span>曲選択</span>
+          <select id="bgm-track">
+            <option value="none">None</option>
+            <option value="morning-coffee">Morning Coffee</option>
+            <option value="cafe-jazz">Cafe Jazz</option>
+            <option value="rain">Rain</option>
+            <option value="lofi">Lo-Fi</option>
+          </select>
+        </label>
+
+        <label class="sound-setting-row volume-row" for="bgm-volume">
+          <span>音量</span>
+          <span class="volume-control">
+            <input id="bgm-volume" type="range" min="0" max="100" step="1" />
+            <output id="bgm-volume-value" for="bgm-volume">45</output>
+          </span>
+        </label>
+      </div>
 
       <p id="bgm-status" class="bgm-status" aria-live="polite"></p>
+      <button id="sound-settings-close-bottom" class="sound-close-text-button" type="button">閉じる</button>
     </section>
 
     <section id="step-editor" class="step-editor" aria-labelledby="editor-title" hidden>

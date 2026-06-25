@@ -121,6 +121,16 @@ h1 {
   background: #c99463;
 }
 
+.control-button.sound[aria-expanded="true"] {
+  border-color: #d0a073;
+  color: #251912;
+  background: #c99463;
+}
+
+.control-button.sound[aria-expanded="true"]:hover {
+  background: #dda978;
+}
+
 .control-button:hover {
   background: #49362b;
   transform: translateY(-1px);
@@ -139,7 +149,12 @@ h1 {
 #timer-preset:focus-visible,
 #alert-sound:focus-visible,
 #bgm-track:focus-visible,
+#alert-volume:focus-visible,
+#bgm-volume:focus-visible,
+#alert-enabled:focus-visible + .toggle-track,
 #bgm-enabled:focus-visible + .toggle-track,
+.sound-close-button:focus-visible,
+.sound-close-text-button:focus-visible,
 .edit-button:focus-visible,
 .text-button:focus-visible,
 .add-step-button:focus-visible,
@@ -186,7 +201,7 @@ h1 {
 
 .sound-settings {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   margin-top: 14px;
   padding: 14px;
   border: 1px solid #49372d;
@@ -194,10 +209,49 @@ h1 {
   background: #1a1512;
 }
 
+.sound-settings[hidden] {
+  display: none;
+}
+
+.sound-settings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .sound-settings h2 {
-  margin: 0 0 2px;
+  margin: 0;
   color: #ddc1a4;
   font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.sound-close-button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #554035;
+  border-radius: 50%;
+  color: #dfcbb7;
+  background: #30241e;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.sound-group {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed #49372d;
+}
+
+.sound-group h3 {
+  margin: 0;
+  color: #c8a783;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 
@@ -220,6 +274,28 @@ h1 {
   color: #eee0d1;
   background: #110e0c;
   cursor: pointer;
+}
+
+.volume-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 9px;
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 30px;
+  margin: 0;
+  accent-color: #c99463;
+  cursor: pointer;
+}
+
+.volume-control output {
+  color: #dfcbb7;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .toggle-switch {
@@ -259,11 +335,13 @@ h1 {
   transition: background-color 120ms ease, transform 120ms ease;
 }
 
+#alert-enabled:checked + .toggle-track,
 #bgm-enabled:checked + .toggle-track {
   border-color: #c38e60;
   background: #6d4b34;
 }
 
+#alert-enabled:checked + .toggle-track::after,
 #bgm-enabled:checked + .toggle-track::after {
   background: #f0d1ae;
   transform: translateX(18px);
@@ -281,6 +359,16 @@ h1 {
   color: #c8a783;
   font-size: 0.7rem;
   text-align: right;
+}
+
+.sound-close-text-button {
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid #654b3c;
+  border-radius: 9px;
+  color: #dfcbb7;
+  background: #30241e;
+  cursor: pointer;
 }
 
 .edit-button,
@@ -456,13 +544,13 @@ h1 {
   }
 
   .controls {
-    gap: 15px;
+    gap: 11px;
   }
 
   .control-button {
-    width: 58px;
-    height: 58px;
-    flex-basis: 58px;
+    width: 56px;
+    height: 56px;
+    flex-basis: 56px;
   }
 
   .step-editor {
@@ -491,6 +579,8 @@ h1 {
   .add-step-button,
   .save-button,
   .delete-button,
+  .sound-close-button,
+  .sound-close-text-button,
   .toggle-track,
   .toggle-track::after {
     transition: none;

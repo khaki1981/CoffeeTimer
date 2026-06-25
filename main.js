@@ -5,6 +5,10 @@ const menuSelect = document.getElementById("timer-preset");
 const startButton = document.getElementById("start-button");
 const pauseButton = document.getElementById("pause-button");
 const resetButton = document.getElementById("reset-button");
+const soundSettingsButton = document.getElementById("sound-settings-button");
+const soundSettings = document.getElementById("sound-settings");
+const soundSettingsClose = document.getElementById("sound-settings-close");
+const soundSettingsCloseBottom = document.getElementById("sound-settings-close-bottom");
 const editButton = document.getElementById("edit-button");
 const editor = document.getElementById("step-editor");
 const newMenuButton = document.getElementById("new-menu-button");
@@ -13,19 +17,28 @@ const stepList = document.getElementById("step-list");
 const addStepButton = document.getElementById("add-step-button");
 const saveMenuButton = document.getElementById("save-menu-button");
 const editorMessage = document.getElementById("editor-message");
+const alertEnabledInput = document.getElementById("alert-enabled");
 const alertSoundSelect = document.getElementById("alert-sound");
+const alertVolumeInput = document.getElementById("alert-volume");
+const alertVolumeValue = document.getElementById("alert-volume-value");
+const alertToggleLabel = document.getElementById("alert-toggle-label");
 const bgmEnabledInput = document.getElementById("bgm-enabled");
 const bgmTrackSelect = document.getElementById("bgm-track");
-const bgmToggleLabel = document.querySelector(".toggle-label");
+const bgmVolumeInput = document.getElementById("bgm-volume");
+const bgmVolumeValue = document.getElementById("bgm-volume-value");
+const bgmToggleLabel = document.getElementById("bgm-toggle-label");
 const bgmStatus = document.getElementById("bgm-status");
 
 const MENUS_STORAGE_KEY = "coffee-timer-menus";
 const SELECTED_MENU_STORAGE_KEY = "coffee-timer-selected-menu";
+const ALERT_ENABLED_STORAGE_KEY = "coffee-timer-alert-enabled";
 const ALERT_SOUND_STORAGE_KEY = "coffee-timer-alert-sound";
+const ALERT_VOLUME_STORAGE_KEY = "coffee-timer-alert-volume";
 const BGM_ENABLED_STORAGE_KEY = "coffee-timer-bgm-enabled";
 const BGM_TRACK_STORAGE_KEY = "coffee-timer-bgm-track";
+const BGM_VOLUME_STORAGE_KEY = "coffee-timer-bgm-volume";
 const MAX_MINUTES = 99;
-const ALERT_SOUND_KEYS = ["bell", "wood", "soft", "none"];
+const ALERT_SOUND_KEYS = ["bell", "wood", "soft"];
 const BGM_TRACKS = {
   none: null,
   "morning-coffee": "assets/music/morningcoffee.mp3",
@@ -33,7 +46,8 @@ const BGM_TRACKS = {
   rain: "assets/music/rain.mp3",
   lofi: "assets/music/lofi.mp3"
 };
-const BGM_VOLUME = 0.45;
+const DEFAULT_ALERT_VOLUME = 70;
+const DEFAULT_BGM_VOLUME = 45;
 
 const DEFAULT_MENUS = [
   {
@@ -54,9 +68,12 @@ let remainingSeconds = 60;
 let timerId = null;
 let targetTime = null;
 let audioContext = null;
+let alertEnabled = true;
 let selectedAlertSound = "bell";
+let alertVolume = DEFAULT_ALERT_VOLUME;
 let bgmEnabled = false;
 let selectedBgmTrack = "morning-coffee";
+let bgmVolume = DEFAULT_BGM_VOLUME;
 let bgmAudio = null;
 let bgmFadeTimer = null;
 
@@ -158,38 +175,79 @@ function saveMenus() {
   }
 }
 
+function normalizeVolume(value, fallback) {
+  if (value === null || value === "") return fallback;
+  const volume = Number(value);
+  return Number.isFinite(volume) && volume >= 0 && volume <= 100
+    ? Math.round(volume)
+    : fallback;
+}
+
+function normalizeStoredBoolean(value, fallback) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
 function loadSoundSettings() {
   try {
+    const savedAlertEnabled = localStorage.getItem(ALERT_ENABLED_STORAGE_KEY);
     const savedAlert = localStorage.getItem(ALERT_SOUND_STORAGE_KEY);
+    const savedAlertVolume = localStorage.getItem(ALERT_VOLUME_STORAGE_KEY);
     const savedBgmEnabled = localStorage.getItem(BGM_ENABLED_STORAGE_KEY);
     const savedBgmTrack = localStorage.getItem(BGM_TRACK_STORAGE_KEY);
+    const savedBgmVolume = localStorage.getItem(BGM_VOLUME_STORAGE_KEY);
 
+    // 旧設定の「None」は、通知音OFFとして引き継ぎます。
+    alertEnabled = savedAlertEnabled === null
+      ? savedAlert !== "none"
+      : normalizeStoredBoolean(savedAlertEnabled, true);
     selectedAlertSound = ALERT_SOUND_KEYS.includes(savedAlert) ? savedAlert : "bell";
-    bgmEnabled = savedBgmEnabled === "true";
+    alertVolume = normalizeVolume(savedAlertVolume, DEFAULT_ALERT_VOLUME);
+    bgmEnabled = normalizeStoredBoolean(savedBgmEnabled, false);
     selectedBgmTrack = Object.hasOwn(BGM_TRACKS, savedBgmTrack) ? savedBgmTrack : "morning-coffee";
+    bgmVolume = normalizeVolume(savedBgmVolume, DEFAULT_BGM_VOLUME);
   } catch (error) {
     console.warn("音設定を読み込めなかったため、初期値を使用します。", error);
+    alertEnabled = true;
     selectedAlertSound = "bell";
+    alertVolume = DEFAULT_ALERT_VOLUME;
     bgmEnabled = false;
     selectedBgmTrack = "morning-coffee";
+    bgmVolume = DEFAULT_BGM_VOLUME;
   }
 }
 
 function saveSoundSettings() {
   try {
+    localStorage.setItem(ALERT_ENABLED_STORAGE_KEY, String(alertEnabled));
     localStorage.setItem(ALERT_SOUND_STORAGE_KEY, selectedAlertSound);
+    localStorage.setItem(ALERT_VOLUME_STORAGE_KEY, String(alertVolume));
     localStorage.setItem(BGM_ENABLED_STORAGE_KEY, String(bgmEnabled));
     localStorage.setItem(BGM_TRACK_STORAGE_KEY, selectedBgmTrack);
+    localStorage.setItem(BGM_VOLUME_STORAGE_KEY, String(bgmVolume));
   } catch (error) {
     console.warn("音設定を保存できませんでした。", error);
   }
 }
 
 function renderSoundSettings() {
+  alertEnabledInput.checked = alertEnabled;
+  alertToggleLabel.textContent = alertEnabled ? "ON" : "OFF";
   alertSoundSelect.value = selectedAlertSound;
+  alertVolumeInput.value = String(alertVolume);
+  alertVolumeValue.value = String(alertVolume);
   bgmEnabledInput.checked = bgmEnabled;
   bgmTrackSelect.value = selectedBgmTrack;
+  bgmVolumeInput.value = String(bgmVolume);
+  bgmVolumeValue.value = String(bgmVolume);
   bgmToggleLabel.textContent = bgmEnabled ? "ON" : "OFF";
+}
+
+function setSoundSettingsOpen(isOpen) {
+  soundSettings.hidden = !isOpen;
+  soundSettingsButton.setAttribute("aria-expanded", String(isOpen));
+  soundSettingsButton.setAttribute("aria-label", isOpen ? "音設定を閉じる" : "音設定を開く");
 }
 
 function stopInterval() {
@@ -312,26 +370,28 @@ function playTone({ frequency, type, volume, duration, startOffset = 0, endFrequ
 }
 
 function playBellSound() {
-  playTone({ frequency: 880, type: "sine", volume: 0.16, duration: 0.55 });
-  playTone({ frequency: 1320, type: "sine", volume: 0.08, duration: 0.4, startOffset: 0.04 });
+  const volumeScale = alertVolume / 100;
+  playTone({ frequency: 880, type: "sine", volume: 0.16 * volumeScale, duration: 0.55 });
+  playTone({ frequency: 1320, type: "sine", volume: 0.08 * volumeScale, duration: 0.4, startOffset: 0.04 });
 }
 
 function playWoodSound() {
+  const volumeScale = alertVolume / 100;
   playTone({
     frequency: 260,
     endFrequency: 110,
     type: "triangle",
-    volume: 0.2,
+    volume: 0.2 * volumeScale,
     duration: 0.16
   });
 }
 
 function playSoftSound() {
-  playTone({ frequency: 520, type: "sine", volume: 0.09, duration: 0.3 });
+  playTone({ frequency: 520, type: "sine", volume: 0.09 * (alertVolume / 100), duration: 0.3 });
 }
 
 function playAlertSound() {
-  if (selectedAlertSound === "none") return;
+  if (!alertEnabled || alertVolume === 0) return;
 
   try {
     if (selectedAlertSound === "bell") playBellSound();
@@ -365,7 +425,7 @@ function loadBgmTrack(trackKey) {
   const audio = new Audio();
   audio.loop = true;
   audio.preload = "none";
-  audio.volume = BGM_VOLUME;
+  audio.volume = bgmVolume / 100;
   audio.src = filePath;
   audio.addEventListener("error", () => {
     if (bgmAudio === audio) {
@@ -382,7 +442,7 @@ function playBgm() {
   const audio = bgmAudio ?? loadBgmTrack(selectedBgmTrack);
   if (!audio) return;
 
-  audio.volume = BGM_VOLUME;
+  audio.volume = bgmVolume / 100;
   const playPromise = audio.play();
   if (playPromise !== undefined) {
     playPromise
@@ -404,8 +464,8 @@ function stopBgm() {
   clearBgmFade();
   if (bgmAudio === null) return;
   bgmAudio.pause();
-  bgmAudio.currentTime = 0;
-  bgmAudio.volume = BGM_VOLUME;
+  if (bgmAudio.readyState > 0) bgmAudio.currentTime = 0;
+  bgmAudio.volume = bgmVolume / 100;
 }
 
 function fadeOutBgm() {
@@ -491,10 +551,29 @@ startButton.addEventListener("click", startTimer);
 pauseButton.addEventListener("click", pauseTimer);
 resetButton.addEventListener("click", resetToFirstStep);
 
+soundSettingsButton.addEventListener("click", () => {
+  setSoundSettingsOpen(soundSettings.hidden);
+});
+
+soundSettingsClose.addEventListener("click", () => setSoundSettingsOpen(false));
+soundSettingsCloseBottom.addEventListener("click", () => setSoundSettingsOpen(false));
+
+alertEnabledInput.addEventListener("change", () => {
+  alertEnabled = alertEnabledInput.checked;
+  alertToggleLabel.textContent = alertEnabled ? "ON" : "OFF";
+  saveSoundSettings();
+});
+
 alertSoundSelect.addEventListener("change", () => {
   selectedAlertSound = ALERT_SOUND_KEYS.includes(alertSoundSelect.value)
     ? alertSoundSelect.value
     : "bell";
+  saveSoundSettings();
+});
+
+alertVolumeInput.addEventListener("input", () => {
+  alertVolume = normalizeVolume(alertVolumeInput.value, DEFAULT_ALERT_VOLUME);
+  alertVolumeValue.value = String(alertVolume);
   saveSoundSettings();
 });
 
@@ -508,6 +587,13 @@ bgmEnabledInput.addEventListener("change", () => {
   } else if (!bgmEnabled) {
     stopBgm();
   }
+});
+
+bgmVolumeInput.addEventListener("input", () => {
+  bgmVolume = normalizeVolume(bgmVolumeInput.value, DEFAULT_BGM_VOLUME);
+  bgmVolumeValue.value = String(bgmVolume);
+  if (bgmAudio !== null) bgmAudio.volume = bgmVolume / 100;
+  saveSoundSettings();
 });
 
 bgmTrackSelect.addEventListener("change", () => {
@@ -610,6 +696,7 @@ selectedMenuIndex = loadSelectedMenuIndex();
 loadSoundSettings();
 renderMenuSelect();
 renderSoundSettings();
+setSoundSettingsOpen(false);
 resetToFirstStep();
 openEditorForMenu(selectedMenuIndex);
 saveMenus();
