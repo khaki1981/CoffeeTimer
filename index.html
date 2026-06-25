@@ -35,6 +35,42 @@
       </button>
     </div>
 
+    <section class="sound-settings" aria-labelledby="sound-settings-title">
+      <h2 id="sound-settings-title">音設定</h2>
+
+      <label class="sound-setting-row" for="alert-sound">
+        <span>通知音</span>
+        <select id="alert-sound">
+          <option value="bell">Bell</option>
+          <option value="wood">Wood</option>
+          <option value="soft">Soft</option>
+          <option value="none">None</option>
+        </select>
+      </label>
+
+      <div class="sound-setting-row">
+        <span>BGM</span>
+        <label class="toggle-switch">
+          <input id="bgm-enabled" type="checkbox" />
+          <span class="toggle-track" aria-hidden="true"></span>
+          <span class="toggle-label">OFF</span>
+        </label>
+      </div>
+
+      <label class="sound-setting-row" for="bgm-track">
+        <span>曲</span>
+        <select id="bgm-track">
+          <option value="none">None</option>
+          <option value="morning-coffee">Morning Coffee</option>
+          <option value="cafe-jazz">Cafe Jazz</option>
+          <option value="rain">Rain</option>
+          <option value="lofi">Lo-Fi</option>
+        </select>
+      </label>
+
+      <p id="bgm-status" class="bgm-status" aria-live="polite"></p>
+    </section>
+
     <section id="step-editor" class="step-editor" aria-labelledby="editor-title" hidden>
       <div class="editor-heading">
         <h2 id="editor-title">メニュー編集</h2>

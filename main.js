@@ -13,10 +13,27 @@ const stepList = document.getElementById("step-list");
 const addStepButton = document.getElementById("add-step-button");
 const saveMenuButton = document.getElementById("save-menu-button");
 const editorMessage = document.getElementById("editor-message");
+const alertSoundSelect = document.getElementById("alert-sound");
+const bgmEnabledInput = document.getElementById("bgm-enabled");
+const bgmTrackSelect = document.getElementById("bgm-track");
+const bgmToggleLabel = document.querySelector(".toggle-label");
+const bgmStatus = document.getElementById("bgm-status");
 
 const MENUS_STORAGE_KEY = "coffee-timer-menus";
 const SELECTED_MENU_STORAGE_KEY = "coffee-timer-selected-menu";
+const ALERT_SOUND_STORAGE_KEY = "coffee-timer-alert-sound";
+const BGM_ENABLED_STORAGE_KEY = "coffee-timer-bgm-enabled";
+const BGM_TRACK_STORAGE_KEY = "coffee-timer-bgm-track";
 const MAX_MINUTES = 99;
+const ALERT_SOUND_KEYS = ["bell", "wood", "soft", "none"];
+const BGM_TRACKS = {
+  none: null,
+  "morning-coffee": "assets/music/morning-coffee.mp3",
+  "cafe-jazz": "assets/music/cafe-jazz.mp3",
+  rain: "assets/music/rain.mp3",
+  lofi: "assets/music/lofi.mp3"
+};
+const BGM_VOLUME = 0.45;
 
 const DEFAULT_MENUS = [
   {
@@ -37,6 +54,11 @@ let remainingSeconds = 60;
 let timerId = null;
 let targetTime = null;
 let audioContext = null;
+let selectedAlertSound = "bell";
+let bgmEnabled = false;
+let selectedBgmTrack = "morning-coffee";
+let bgmAudio = null;
+let bgmFadeTimer = null;
 
 // 編集内容は「記録」を押すまで保存データと分けて管理します。
 let draftMenu = null;
@@ -136,6 +158,40 @@ function saveMenus() {
   }
 }
 
+function loadSoundSettings() {
+  try {
+    const savedAlert = localStorage.getItem(ALERT_SOUND_STORAGE_KEY);
+    const savedBgmEnabled = localStorage.getItem(BGM_ENABLED_STORAGE_KEY);
+    const savedBgmTrack = localStorage.getItem(BGM_TRACK_STORAGE_KEY);
+
+    selectedAlertSound = ALERT_SOUND_KEYS.includes(savedAlert) ? savedAlert : "bell";
+    bgmEnabled = savedBgmEnabled === "true";
+    selectedBgmTrack = Object.hasOwn(BGM_TRACKS, savedBgmTrack) ? savedBgmTrack : "morning-coffee";
+  } catch (error) {
+    console.warn("音設定を読み込めなかったため、初期値を使用します。", error);
+    selectedAlertSound = "bell";
+    bgmEnabled = false;
+    selectedBgmTrack = "morning-coffee";
+  }
+}
+
+function saveSoundSettings() {
+  try {
+    localStorage.setItem(ALERT_SOUND_STORAGE_KEY, selectedAlertSound);
+    localStorage.setItem(BGM_ENABLED_STORAGE_KEY, String(bgmEnabled));
+    localStorage.setItem(BGM_TRACK_STORAGE_KEY, selectedBgmTrack);
+  } catch (error) {
+    console.warn("音設定を保存できませんでした。", error);
+  }
+}
+
+function renderSoundSettings() {
+  alertSoundSelect.value = selectedAlertSound;
+  bgmEnabledInput.checked = bgmEnabled;
+  bgmTrackSelect.value = selectedBgmTrack;
+  bgmToggleLabel.textContent = bgmEnabled ? "ON" : "OFF";
+}
+
 function stopInterval() {
   if (timerId !== null) {
     window.clearInterval(timerId);
@@ -146,6 +202,7 @@ function stopInterval() {
 
 function resetToFirstStep() {
   stopInterval();
+  stopBgm();
   currentStepIndex = 0;
   remainingSeconds = stepToSeconds(menus[selectedMenuIndex].steps[0]);
   statusText.textContent = "準備完了";
@@ -224,7 +281,9 @@ function prepareAudio() {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return null;
     if (audioContext === null || audioContext.state === "closed") audioContext = new AudioContext();
-    if (audioContext.state === "suspended") audioContext.resume();
+    if (audioContext.state === "suspended") {
+      audioContext.resume().catch(() => {});
+    }
     return audioContext;
   } catch (error) {
     console.warn("音声を準備できませんでした。", error);
@@ -232,26 +291,146 @@ function prepareAudio() {
   }
 }
 
-function playBuzzer() {
+function playTone({ frequency, type, volume, duration, startOffset = 0, endFrequency = null }) {
+  const context = prepareAudio();
+  if (!context) return;
+
+  const startTime = context.currentTime + startOffset;
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, startTime);
+  if (endFrequency !== null) {
+    oscillator.frequency.exponentialRampToValueAtTime(endFrequency, startTime + duration);
+  }
+  gain.gain.setValueAtTime(volume, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration);
+}
+
+function playBellSound() {
+  playTone({ frequency: 880, type: "sine", volume: 0.16, duration: 0.55 });
+  playTone({ frequency: 1320, type: "sine", volume: 0.08, duration: 0.4, startOffset: 0.04 });
+}
+
+function playWoodSound() {
+  playTone({
+    frequency: 260,
+    endFrequency: 110,
+    type: "triangle",
+    volume: 0.2,
+    duration: 0.16
+  });
+}
+
+function playSoftSound() {
+  playTone({ frequency: 520, type: "sine", volume: 0.09, duration: 0.3 });
+}
+
+function playAlertSound() {
+  if (selectedAlertSound === "none") return;
+
   try {
-    const context = prepareAudio();
-    if (!context) return;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.type = "square";
-    oscillator.frequency.value = 760;
-    gain.gain.setValueAtTime(0.14, context.currentTime);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.18);
+    if (selectedAlertSound === "bell") playBellSound();
+    if (selectedAlertSound === "wood") playWoodSound();
+    if (selectedAlertSound === "soft") playSoftSound();
   } catch (error) {
-    console.warn("ブザー音を再生できませんでした。", error);
+    console.warn("通知音を再生できませんでした。", error);
   }
 }
 
+function clearBgmFade() {
+  if (bgmFadeTimer !== null) {
+    window.clearInterval(bgmFadeTimer);
+    bgmFadeTimer = null;
+  }
+}
+
+function loadBgmTrack(trackKey) {
+  clearBgmFade();
+  if (bgmAudio !== null) {
+    bgmAudio.pause();
+    bgmAudio.removeAttribute("src");
+    bgmAudio.load();
+  }
+  bgmAudio = null;
+  bgmStatus.textContent = "";
+
+  const filePath = BGM_TRACKS[trackKey];
+  if (!filePath) return null;
+
+  const audio = new Audio();
+  audio.loop = true;
+  audio.preload = "none";
+  audio.volume = BGM_VOLUME;
+  audio.src = filePath;
+  audio.addEventListener("error", () => {
+    if (bgmAudio === audio) {
+      bgmStatus.textContent = "BGMファイルが見つかりません";
+    }
+  });
+  bgmAudio = audio;
+  return bgmAudio;
+}
+
+function playBgm() {
+  if (!bgmEnabled || selectedBgmTrack === "none") return;
+  clearBgmFade();
+  const audio = bgmAudio ?? loadBgmTrack(selectedBgmTrack);
+  if (!audio) return;
+
+  audio.volume = BGM_VOLUME;
+  const playPromise = audio.play();
+  if (playPromise !== undefined) {
+    playPromise
+      .then(() => {
+        if (bgmAudio === audio) bgmStatus.textContent = "";
+      })
+      .catch(() => {
+        if (bgmAudio === audio) bgmStatus.textContent = "BGMファイルが見つかりません";
+      });
+  }
+}
+
+function pauseBgm() {
+  clearBgmFade();
+  if (bgmAudio !== null) bgmAudio.pause();
+}
+
+function stopBgm() {
+  clearBgmFade();
+  if (bgmAudio === null) return;
+  bgmAudio.pause();
+  bgmAudio.currentTime = 0;
+  bgmAudio.volume = BGM_VOLUME;
+}
+
+function fadeOutBgm() {
+  clearBgmFade();
+  if (bgmAudio === null || bgmAudio.paused) {
+    stopBgm();
+    return;
+  }
+
+  const audio = bgmAudio;
+  const steps = 15;
+  const startVolume = audio.volume;
+  let currentStep = 0;
+  bgmFadeTimer = window.setInterval(() => {
+    currentStep += 1;
+    audio.volume = Math.max(0, startVolume * (1 - currentStep / steps));
+    if (currentStep >= steps) {
+      clearBgmFade();
+      if (bgmAudio === audio) stopBgm();
+    }
+  }, 100);
+}
+
 function finishCurrentStep() {
-  playBuzzer();
+  playAlertSound();
   const steps = menus[selectedMenuIndex].steps;
 
   if (currentStepIndex < steps.length - 1) {
@@ -264,6 +443,7 @@ function finishCurrentStep() {
   }
 
   stopInterval();
+  fadeOutBgm();
   remainingSeconds = 0;
   updateDisplay();
   statusText.textContent = "できあがり ☕";
@@ -288,12 +468,14 @@ function startTimer() {
   targetTime = Date.now() + remainingSeconds * 1000;
   statusText.textContent = "抽出中…";
   timerId = window.setInterval(tick, 250);
+  playBgm();
 }
 
 function pauseTimer() {
   if (timerId === null) return;
   remainingSeconds = Math.max(0, Math.ceil((targetTime - Date.now()) / 1000));
   stopInterval();
+  pauseBgm();
   updateDisplay();
   statusText.textContent = "一時停止";
 }
@@ -308,6 +490,34 @@ menuSelect.addEventListener("change", () => {
 startButton.addEventListener("click", startTimer);
 pauseButton.addEventListener("click", pauseTimer);
 resetButton.addEventListener("click", resetToFirstStep);
+
+alertSoundSelect.addEventListener("change", () => {
+  selectedAlertSound = ALERT_SOUND_KEYS.includes(alertSoundSelect.value)
+    ? alertSoundSelect.value
+    : "bell";
+  saveSoundSettings();
+});
+
+bgmEnabledInput.addEventListener("change", () => {
+  bgmEnabled = bgmEnabledInput.checked;
+  bgmToggleLabel.textContent = bgmEnabled ? "ON" : "OFF";
+  bgmStatus.textContent = "";
+  saveSoundSettings();
+  if (bgmEnabled && timerId !== null) {
+    playBgm();
+  } else if (!bgmEnabled) {
+    stopBgm();
+  }
+});
+
+bgmTrackSelect.addEventListener("change", () => {
+  selectedBgmTrack = Object.hasOwn(BGM_TRACKS, bgmTrackSelect.value)
+    ? bgmTrackSelect.value
+    : "morning-coffee";
+  loadBgmTrack(selectedBgmTrack);
+  saveSoundSettings();
+  if (bgmEnabled && timerId !== null) playBgm();
+});
 
 editButton.addEventListener("click", () => {
   const willOpen = editor.hidden;
@@ -397,7 +607,9 @@ saveMenuButton.addEventListener("click", () => {
 
 menus = loadMenus();
 selectedMenuIndex = loadSelectedMenuIndex();
+loadSoundSettings();
 renderMenuSelect();
+renderSoundSettings();
 resetToFirstStep();
 openEditorForMenu(selectedMenuIndex);
 saveMenus();
