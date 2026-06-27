@@ -46,8 +46,10 @@ const BGM_TRACKS = {
   rain: "assets/music/rain.mp3",
   lofi: "assets/music/lofi.mp3"
 };
-const DEFAULT_ALERT_VOLUME = 70;
-const DEFAULT_BGM_VOLUME = 45;
+const OLD_DEFAULT_ALERT_VOLUME = 70;
+const OLD_DEFAULT_BGM_VOLUME = 45;
+const DEFAULT_ALERT_VOLUME = 91;
+const DEFAULT_BGM_VOLUME = 59;
 
 const DEFAULT_MENUS = [
   {
@@ -183,6 +185,11 @@ function normalizeVolume(value, fallback) {
     : fallback;
 }
 
+function normalizeVolumeWithDefaultMigration(value, oldDefault, newDefault) {
+  const volume = normalizeVolume(value, newDefault);
+  return value !== null && volume === oldDefault ? newDefault : volume;
+}
+
 function normalizeStoredBoolean(value, fallback) {
   if (value === "true") return true;
   if (value === "false") return false;
@@ -203,10 +210,18 @@ function loadSoundSettings() {
       ? savedAlert !== "none"
       : normalizeStoredBoolean(savedAlertEnabled, true);
     selectedAlertSound = ALERT_SOUND_KEYS.includes(savedAlert) ? savedAlert : "bell";
-    alertVolume = normalizeVolume(savedAlertVolume, DEFAULT_ALERT_VOLUME);
+    alertVolume = normalizeVolumeWithDefaultMigration(
+      savedAlertVolume,
+      OLD_DEFAULT_ALERT_VOLUME,
+      DEFAULT_ALERT_VOLUME
+    );
     bgmEnabled = normalizeStoredBoolean(savedBgmEnabled, false);
     selectedBgmTrack = Object.hasOwn(BGM_TRACKS, savedBgmTrack) ? savedBgmTrack : "morning-coffee";
-    bgmVolume = normalizeVolume(savedBgmVolume, DEFAULT_BGM_VOLUME);
+    bgmVolume = normalizeVolumeWithDefaultMigration(
+      savedBgmVolume,
+      OLD_DEFAULT_BGM_VOLUME,
+      DEFAULT_BGM_VOLUME
+    );
   } catch (error) {
     console.warn("音設定を読み込めなかったため、初期値を使用します。", error);
     alertEnabled = true;
