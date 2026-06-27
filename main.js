@@ -50,6 +50,7 @@ const OLD_DEFAULT_ALERT_VOLUME = 70;
 const OLD_DEFAULT_BGM_VOLUME = 45;
 const DEFAULT_ALERT_VOLUME = 91;
 const DEFAULT_BGM_VOLUME = 59;
+const DESKTOP_VOLUME_BOOST = 1.3;
 
 const DEFAULT_MENUS = [
   {
@@ -77,6 +78,9 @@ let bgmEnabled = false;
 let selectedBgmTrack = "morning-coffee";
 let bgmVolume = DEFAULT_BGM_VOLUME;
 let bgmAudio = null;
+let bgmSourceNode = null;
+let bgmGainNode = null;
+let bgmFadeLevel = 1;
 let bgmFadeTimer = null;
 
 // 編集内容は「記録」を押すまで保存データと分けて管理します。
@@ -364,6 +368,21 @@ function prepareAudio() {
   }
 }
 
+function isMobileAudioDevice() {
+  const userAgent = navigator.userAgent || "";
+  return /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(userAgent)
+    || (/Macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1);
+}
+
+function getEffectiveVolumeScale(volume) {
+  const platformBoost = isMobileAudioDevice() ? 1 : DESKTOP_VOLUME_BOOST;
+  return (volume / 100) * platformBoost;
+}
+
+function getDirectAudioVolume(volume, fadeLevel = 1) {
+  return Math.min(1, Math.max(0, getEffectiveVolumeScale(volume) * fadeLevel));
+}
+
 function playTone({ frequency, type, volume, duration, startOffset = 0, endFrequency = null }) {
   const context = prepareAudio();
   if (!context) return;
@@ -385,13 +404,13 @@ function playTone({ frequency, type, volume, duration, startOffset = 0, endFrequ
 }
 
 function playBellSound() {
-  const volumeScale = alertVolume / 100;
+  const volumeScale = getEffectiveVolumeScale(alertVolume);
   playTone({ frequency: 880, type: "sine", volume: 0.16 * volumeScale, duration: 0.55 });
   playTone({ frequency: 1320, type: "sine", volume: 0.08 * volumeScale, duration: 0.4, startOffset: 0.04 });
 }
 
 function playWoodSound() {
-  const volumeScale = alertVolume / 100;
+  const volumeScale = getEffectiveVolumeScale(alertVolume);
   playTone({
     frequency: 260,
     endFrequency: 110,
@@ -402,7 +421,7 @@ function playWoodSound() {
 }
 
 function playSoftSound() {
-  playTone({ frequency: 520, type: "sine", volume: 0.09 * (alertVolume / 100), duration: 0.3 });
+  playTone({ frequency: 520, type: "sine", volume: 0.09 * getEffectiveVolumeScale(alertVolume), duration: 0.3 });
 }
 
 function playAlertSound() {
@@ -422,10 +441,55 @@ function clearBgmFade() {
     window.clearInterval(bgmFadeTimer);
     bgmFadeTimer = null;
   }
+  bgmFadeLevel = 1;
+}
+
+function disconnectBgmAudioGraph() {
+  if (bgmSourceNode !== null) {
+    bgmSourceNode.disconnect();
+  }
+  if (bgmGainNode !== null) {
+    bgmGainNode.disconnect();
+  }
+  bgmSourceNode = null;
+  bgmGainNode = null;
+}
+
+function connectBgmAudioGraph(audio) {
+  if (bgmSourceNode !== null && bgmGainNode !== null) return true;
+
+  const context = prepareAudio();
+  if (!context || typeof context.createMediaElementSource !== "function") return false;
+
+  try {
+    bgmSourceNode = context.createMediaElementSource(audio);
+    bgmGainNode = context.createGain();
+    bgmSourceNode.connect(bgmGainNode);
+    bgmGainNode.connect(context.destination);
+    return true;
+  } catch (error) {
+    console.warn("BGM縺ｮ髻ｳ驥上ヮ繝ｼ繝峨ｒ菴懈・縺ｧ縺阪∪縺帙ｓ縺ｧ縺励◆縲・", error);
+    disconnectBgmAudioGraph();
+    return false;
+  }
+}
+
+function updateBgmOutputVolume() {
+  if (bgmAudio === null) return;
+
+  const volume = Math.max(0, getEffectiveVolumeScale(bgmVolume) * bgmFadeLevel);
+  if (bgmGainNode !== null && audioContext !== null && audioContext.state !== "closed") {
+    bgmAudio.volume = 1;
+    bgmGainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+    return;
+  }
+
+  bgmAudio.volume = Math.min(1, volume);
 }
 
 function loadBgmTrack(trackKey) {
   clearBgmFade();
+  disconnectBgmAudioGraph();
   if (bgmAudio !== null) {
     bgmAudio.pause();
     bgmAudio.removeAttribute("src");
@@ -440,7 +504,7 @@ function loadBgmTrack(trackKey) {
   const audio = new Audio();
   audio.loop = true;
   audio.preload = "none";
-  audio.volume = bgmVolume / 100;
+  audio.volume = getDirectAudioVolume(bgmVolume);
   audio.src = filePath;
   audio.addEventListener("error", () => {
     if (bgmAudio === audio) {
@@ -457,7 +521,8 @@ function playBgm() {
   const audio = bgmAudio ?? loadBgmTrack(selectedBgmTrack);
   if (!audio) return;
 
-  audio.volume = bgmVolume / 100;
+  connectBgmAudioGraph(audio);
+  updateBgmOutputVolume();
   const playPromise = audio.play();
   if (playPromise !== undefined) {
     playPromise
@@ -480,7 +545,7 @@ function stopBgm() {
   if (bgmAudio === null) return;
   bgmAudio.pause();
   if (bgmAudio.readyState > 0) bgmAudio.currentTime = 0;
-  bgmAudio.volume = bgmVolume / 100;
+  updateBgmOutputVolume();
 }
 
 function fadeOutBgm() {
@@ -492,11 +557,11 @@ function fadeOutBgm() {
 
   const audio = bgmAudio;
   const steps = 15;
-  const startVolume = audio.volume;
   let currentStep = 0;
   bgmFadeTimer = window.setInterval(() => {
     currentStep += 1;
-    audio.volume = Math.max(0, startVolume * (1 - currentStep / steps));
+    bgmFadeLevel = Math.max(0, 1 - currentStep / steps);
+    updateBgmOutputVolume();
     if (currentStep >= steps) {
       clearBgmFade();
       if (bgmAudio === audio) stopBgm();
@@ -586,11 +651,14 @@ alertSoundSelect.addEventListener("change", () => {
   saveSoundSettings();
 });
 
-alertVolumeInput.addEventListener("input", () => {
+function handleAlertVolumeChange() {
   alertVolume = normalizeVolume(alertVolumeInput.value, DEFAULT_ALERT_VOLUME);
   alertVolumeValue.value = String(alertVolume);
   saveSoundSettings();
-});
+}
+
+alertVolumeInput.addEventListener("input", handleAlertVolumeChange);
+alertVolumeInput.addEventListener("change", handleAlertVolumeChange);
 
 bgmEnabledInput.addEventListener("change", () => {
   bgmEnabled = bgmEnabledInput.checked;
@@ -604,12 +672,15 @@ bgmEnabledInput.addEventListener("change", () => {
   }
 });
 
-bgmVolumeInput.addEventListener("input", () => {
+function handleBgmVolumeChange() {
   bgmVolume = normalizeVolume(bgmVolumeInput.value, DEFAULT_BGM_VOLUME);
   bgmVolumeValue.value = String(bgmVolume);
-  if (bgmAudio !== null) bgmAudio.volume = bgmVolume / 100;
+  updateBgmOutputVolume();
   saveSoundSettings();
-});
+}
+
+bgmVolumeInput.addEventListener("input", handleBgmVolumeChange);
+bgmVolumeInput.addEventListener("change", handleBgmVolumeChange);
 
 bgmTrackSelect.addEventListener("change", () => {
   selectedBgmTrack = Object.hasOwn(BGM_TRACKS, bgmTrackSelect.value)
