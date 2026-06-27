@@ -43,6 +43,18 @@
       </button>
     </div>
 
+    <div class="bean-memo-actions">
+      <button
+        id="bean-memo-button"
+        class="memo-button"
+        type="button"
+        aria-expanded="false"
+        aria-controls="bean-memo-panel"
+      >
+        ☕ 豆メモ
+      </button>
+    </div>
+
     <section id="sound-settings" class="sound-settings" aria-labelledby="sound-settings-title" hidden>
       <div class="sound-settings-heading">
         <h2 id="sound-settings-title">音設定</h2>
@@ -132,8 +144,118 @@
       <button id="save-menu-button" class="save-button" type="button">記録</button>
       <p id="editor-message" class="editor-message" aria-live="polite"></p>
     </section>
+
+    <section id="bean-memo-panel" class="bean-memo-panel" aria-labelledby="bean-memo-title" hidden>
+      <div class="bean-memo-heading">
+        <div>
+          <h2 id="bean-memo-title">Coffee Bean Memo</h2>
+          <p id="bean-form-mode" class="bean-form-mode">新しい豆メモ</p>
+        </div>
+        <button id="bean-form-clear" class="text-button" type="button">新規</button>
+      </div>
+
+      <form id="bean-form" class="bean-form">
+        <input id="bean-id" type="hidden" />
+
+        <div class="bean-form-section">
+          <h3>基本情報</h3>
+          <label class="bean-field">
+            <span>豆の名前</span>
+            <input id="bean-name" type="text" maxlength="80" required autocomplete="off" />
+          </label>
+          <label class="bean-field">
+            <span>ロースター / 購入店</span>
+            <input id="bean-roaster" type="text" maxlength="80" autocomplete="off" />
+          </label>
+          <label class="bean-field">
+            <span>産地</span>
+            <input id="bean-origin" type="text" maxlength="80" autocomplete="off" />
+          </label>
+          <label class="bean-field">
+            <span>精製方法</span>
+            <input id="bean-process" type="text" maxlength="60" autocomplete="off" />
+          </label>
+          <label class="bean-field">
+            <span>焙煎度</span>
+            <input id="bean-roast-level" type="text" maxlength="60" autocomplete="off" />
+          </label>
+          <div class="bean-field-grid">
+            <label class="bean-field">
+              <span>購入日</span>
+              <input id="bean-purchase-date" type="date" />
+            </label>
+            <label class="bean-field">
+              <span>開封日</span>
+              <input id="bean-opened-date" type="date" />
+            </label>
+            <label class="bean-field">
+              <span>購入価格</span>
+              <input id="bean-price" type="number" min="0" step="1" inputmode="numeric" />
+            </label>
+            <label class="bean-field">
+              <span>内容量g</span>
+              <input id="bean-weight-gram" type="number" min="0" step="1" inputmode="numeric" />
+            </label>
+          </div>
+        </div>
+
+        <div class="bean-form-section">
+          <h3>味の評価</h3>
+          <div class="rating-grid">
+            <label>酸味<select id="bean-rating-acidity"></select></label>
+            <label>苦味<select id="bean-rating-bitterness"></select></label>
+            <label>甘み<select id="bean-rating-sweetness"></select></label>
+            <label>コク<select id="bean-rating-body"></select></label>
+            <label>香り<select id="bean-rating-aroma"></select></label>
+            <label>後味<select id="bean-rating-aftertaste"></select></label>
+            <label>飲みやすさ<select id="bean-rating-drinkability"></select></label>
+            <label>総合評価<select id="bean-rating-overall"></select></label>
+          </div>
+        </div>
+
+        <div class="bean-form-section">
+          <h3>フレーバーノート</h3>
+          <label class="bean-field">
+            <span>カンマ区切りで入力</span>
+            <input id="bean-flavor-notes" type="text" placeholder="柑橘, 花, 紅茶" autocomplete="off" />
+          </label>
+        </div>
+
+        <div class="bean-form-section">
+          <h3>メモ</h3>
+          <label class="bean-field">
+            <span>感想メモ</span>
+            <textarea id="bean-memo" rows="3"></textarea>
+          </label>
+          <label class="bean-field">
+            <span>次回試したいこと</span>
+            <textarea id="bean-next-try" rows="3"></textarea>
+          </label>
+          <div class="bean-field-grid">
+            <label class="bean-field">
+              <span>リピート評価</span>
+              <select id="bean-repeat-rating"></select>
+            </label>
+            <label class="bean-check-field">
+              <input id="bean-is-favorite" type="checkbox" />
+              <span>お気に入り</span>
+            </label>
+          </div>
+        </div>
+
+        <button id="bean-save-button" class="save-button" type="submit">保存</button>
+        <p id="bean-message" class="editor-message" aria-live="polite"></p>
+      </form>
+
+      <div class="bean-list-area">
+        <h3>豆メモ一覧</h3>
+        <div id="bean-list" class="bean-list"></div>
+      </div>
+    </section>
   </main>
 
+  <script src="js/db.js"></script>
   <script src="main.js"></script>
+  <script src="js/beans.js"></script>
 </body>
 </html>
