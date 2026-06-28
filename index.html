@@ -178,12 +178,8 @@
               <select id="bean-origin-country"></select>
             </label>
           </div>
-          <label id="bean-origin-region-other-field" class="bean-field" hidden>
-            <span>その他の地域</span>
-            <input id="bean-origin-region-other" type="text" maxlength="80" autocomplete="off" />
-          </label>
           <label id="bean-origin-country-other-field" class="bean-field" hidden>
-            <span>その他の国</span>
+            <span>追加する国</span>
             <input id="bean-origin-country-other" type="text" maxlength="80" autocomplete="off" />
           </label>
           <label class="bean-field">
@@ -202,7 +198,11 @@
             <span>その他の焙煎度</span>
             <input id="bean-roast-level-other" type="text" maxlength="60" autocomplete="off" />
           </label>
-          <div class="bean-field-grid">
+        </div>
+
+        <details id="bean-detail-section" class="bean-collapsible">
+          <summary>詳細情報</summary>
+          <div class="bean-collapsible-body bean-field-grid">
             <label class="bean-field">
               <span>購入日</span>
               <input id="bean-purchase-date" type="date" />
@@ -220,41 +220,56 @@
               <input id="bean-weight-gram" type="number" min="0" step="1" inputmode="numeric" />
             </label>
           </div>
-        </div>
+        </details>
 
-        <div class="bean-form-section">
-          <h3>味の評価</h3>
-          <div class="rating-grid">
-            <label>酸味<select id="bean-rating-acidity"></select></label>
-            <label>苦味<select id="bean-rating-bitterness"></select></label>
-            <label>甘み<select id="bean-rating-sweetness"></select></label>
-            <label>コク<select id="bean-rating-body"></select></label>
-            <label>香り<select id="bean-rating-aroma"></select></label>
-            <label>後味<select id="bean-rating-aftertaste"></select></label>
-            <label>飲みやすさ<select id="bean-rating-drinkability"></select></label>
-            <label>総合評価<select id="bean-rating-overall"></select></label>
+        <section class="bean-form-section bean-rating-section" aria-labelledby="bean-rating-title">
+          <div class="bean-section-title-row">
+            <h3 id="bean-rating-title">味の評価</h3>
+            <div class="overall-score">
+              <span>総合評価</span>
+              <output id="bean-rating-overall-output" for="bean-rating-overall">3</output>
+            </div>
           </div>
-        </div>
 
-        <div class="bean-form-section">
-          <h3>フレーバーノート</h3>
-          <label class="bean-field">
-            <span>カンマ区切りで入力</span>
-            <input id="bean-flavor-notes" type="text" placeholder="柑橘, 花, 紅茶" autocomplete="off" />
-          </label>
-        </div>
+          <svg id="bean-radar-chart" class="bean-radar-chart" viewBox="0 0 180 180" role="img" aria-label="味の評価レーダーチャート"></svg>
 
-        <div class="bean-form-section">
-          <h3>メモ</h3>
-          <label class="bean-field">
-            <span>感想メモ</span>
-            <textarea id="bean-memo" rows="3"></textarea>
-          </label>
-          <label class="bean-field">
-            <span>次回試したいこと</span>
-            <textarea id="bean-next-try" rows="3"></textarea>
-          </label>
-          <div class="bean-field-grid">
+          <div class="flavor-preview">
+            <span>フレーバーノート</span>
+            <div id="bean-flavor-tags" class="flavor-tags" aria-live="polite"></div>
+          </div>
+
+          <details id="bean-rating-editor" class="bean-collapsible compact">
+            <summary>評価を編集</summary>
+            <div class="bean-collapsible-body">
+              <div id="bean-rating-controls" class="rating-button-list"></div>
+              <input id="bean-rating-acidity" type="hidden" value="3" />
+              <input id="bean-rating-bitterness" type="hidden" value="3" />
+              <input id="bean-rating-sweetness" type="hidden" value="3" />
+              <input id="bean-rating-body" type="hidden" value="3" />
+              <input id="bean-rating-aroma" type="hidden" value="3" />
+              <input id="bean-rating-aftertaste" type="hidden" value="3" />
+              <input id="bean-rating-drinkability" type="hidden" value="3" />
+              <input id="bean-rating-overall" type="hidden" value="3" />
+
+              <label class="bean-field flavor-input-field">
+                <span>フレーバーノート</span>
+                <input id="bean-flavor-notes" type="text" placeholder="柑橘, 花, 紅茶" autocomplete="off" />
+              </label>
+            </div>
+          </details>
+        </section>
+
+        <details id="bean-note-section" class="bean-collapsible">
+          <summary>メモ</summary>
+          <div class="bean-collapsible-body">
+            <label class="bean-field">
+              <span>感想メモ</span>
+              <textarea id="bean-memo" rows="3"></textarea>
+            </label>
+            <label class="bean-field">
+              <span>次回試したいこと</span>
+              <textarea id="bean-next-try" rows="3"></textarea>
+            </label>
             <label class="bean-field">
               <span>リピート評価</span>
               <select id="bean-repeat-rating"></select>
@@ -264,7 +279,7 @@
               <span>お気に入り</span>
             </label>
           </div>
-        </div>
+        </details>
 
         <button id="bean-save-button" class="save-button" type="submit">保存</button>
         <p id="bean-message" class="editor-message" aria-live="polite"></p>

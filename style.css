@@ -154,6 +154,8 @@ h1 {
 #alert-enabled:focus-visible + .toggle-track,
 #bgm-enabled:focus-visible + .toggle-track,
 .memo-button:focus-visible,
+.bean-collapsible summary:focus-visible,
+.rating-button:focus-visible,
 .bean-form input:focus-visible,
 .bean-form select:focus-visible,
 .bean-form textarea:focus-visible,
@@ -587,9 +589,152 @@ input[type="range"] {
   border-top: 1px dashed #49372d;
 }
 
+.bean-collapsible {
+  border-top: 1px dashed #49372d;
+  padding-top: 10px;
+}
+
+.bean-collapsible summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #49372d;
+  border-radius: 8px;
+  color: #dfcbb7;
+  background: #211a16;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.bean-collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+.bean-collapsible summary::after {
+  color: #c99463;
+  content: "▼";
+  font-size: 0.68rem;
+  transition: transform 120ms ease;
+}
+
+.bean-collapsible[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.bean-collapsible.compact {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.bean-collapsible-body {
+  display: grid;
+  gap: 10px;
+  padding-top: 10px;
+}
+
+.bean-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.overall-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #ad9988;
+  font-size: 0.72rem;
+}
+
+.overall-score output {
+  display: grid;
+  min-width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid #8b6045;
+  border-radius: 50%;
+  color: #251912;
+  background: #c99463;
+  font-weight: 700;
+}
+
+.bean-rating-section {
+  gap: 10px;
+}
+
+.bean-radar-chart {
+  width: min(100%, 260px);
+  aspect-ratio: 1;
+  justify-self: center;
+  overflow: visible;
+}
+
+.radar-grid {
+  fill: none;
+  stroke: #49372d;
+  stroke-width: 1;
+}
+
+.radar-axis {
+  stroke: #554035;
+  stroke-width: 1;
+}
+
+.radar-shape {
+  fill: rgba(201, 148, 99, 0.32);
+  stroke: #e0ad78;
+  stroke-width: 2;
+}
+
+.radar-point {
+  fill: #f0d1ae;
+  stroke: #8b6045;
+  stroke-width: 1;
+}
+
+.radar-label {
+  fill: #dfcbb7;
+  font-size: 8px;
+  text-anchor: middle;
+}
+
+.flavor-preview {
+  display: grid;
+  gap: 7px;
+  color: #ad9988;
+  font-size: 0.74rem;
+}
+
+.flavor-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.flavor-tag {
+  padding: 4px 7px;
+  border: 1px solid #5d4639;
+  border-radius: 999px;
+  color: #f0d8bf;
+  background: #30241e;
+  font-size: 0.72rem;
+}
+
+.flavor-tag.empty {
+  border-style: dashed;
+  color: #9f8a79;
+  background: transparent;
+}
+
 .bean-field,
 .bean-check-field,
-.rating-grid label {
+.rating-control {
   display: grid;
   gap: 6px;
   color: #ad9988;
@@ -601,7 +746,7 @@ input[type="range"] {
 }
 
 .bean-field-grid,
-.rating-grid {
+.rating-button-list {
   display: grid;
   gap: 10px;
 }
@@ -610,11 +755,40 @@ input[type="range"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.rating-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.rating-button-list {
+  gap: 8px;
 }
 
-.bean-form input:not([type="checkbox"]),
+.rating-control {
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+}
+
+.rating-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.rating-button {
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid #554035;
+  border-radius: 8px;
+  color: #dfcbb7;
+  background: #110e0c;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.rating-button.is-active {
+  border-color: #c38e60;
+  color: #251912;
+  background: #c99463;
+  font-weight: 700;
+}
+
+.bean-form input:not([type="checkbox"]):not([type="hidden"]),
 .bean-form select,
 .bean-form textarea {
   width: 100%;
@@ -751,7 +925,15 @@ input[type="range"] {
   }
 
   .bean-field-grid,
-  .rating-grid {
+  .rating-button-list {
+    grid-template-columns: 1fr;
+  }
+
+  .bean-section-title-row {
+    align-items: start;
+  }
+
+  .rating-control {
     grid-template-columns: 1fr;
   }
 
@@ -776,7 +958,8 @@ input[type="range"] {
   .sound-close-button,
   .sound-close-text-button,
   .toggle-track,
-  .toggle-track::after {
+  .toggle-track::after,
+  .bean-collapsible summary::after {
     transition: none;
   }
 }

@@ -7,6 +7,13 @@
   const beanMessage = document.getElementById("bean-message");
   const beanList = document.getElementById("bean-list");
   const roasterList = document.getElementById("roaster-list");
+  const beanDetailSection = document.getElementById("bean-detail-section");
+  const beanRatingEditor = document.getElementById("bean-rating-editor");
+  const beanNoteSection = document.getElementById("bean-note-section");
+  const ratingControls = document.getElementById("bean-rating-controls");
+  const radarChart = document.getElementById("bean-radar-chart");
+  const overallOutput = document.getElementById("bean-rating-overall-output");
+  const flavorTags = document.getElementById("bean-flavor-tags");
 
   const fields = {
     id: document.getElementById("bean-id"),
@@ -14,7 +21,6 @@
     roaster: document.getElementById("bean-roaster"),
     originRegion: document.getElementById("bean-origin-region"),
     originCountry: document.getElementById("bean-origin-country"),
-    originRegionOther: document.getElementById("bean-origin-region-other"),
     originCountryOther: document.getElementById("bean-origin-country-other"),
     process: document.getElementById("bean-process"),
     processOther: document.getElementById("bean-process-other"),
@@ -32,45 +38,52 @@
   };
 
   const otherFields = {
-    originRegion: document.getElementById("bean-origin-region-other-field"),
     originCountry: document.getElementById("bean-origin-country-other-field"),
     process: document.getElementById("bean-process-other-field"),
     roastLevel: document.getElementById("bean-roast-level-other-field")
   };
 
   const OTHER_OPTION = "その他";
+  const UNKNOWN_REGION = "不明";
+  const ADD_COUNTRY_OPTION = "国を追加";
+  const AFRICA_COUNTRIES = ["エチオピア", "ケニア", "ルワンダ", "ブルンジ", "タンザニア", "ウガンダ"];
+  const LATIN_AMERICA_COUNTRIES = [
+    "ブラジル",
+    "コロンビア",
+    "グアテマラ",
+    "コスタリカ",
+    "ホンジュラス",
+    "エルサルバドル",
+    "ニカラグア",
+    "パナマ",
+    "メキシコ",
+    "ペルー",
+    "ボリビア"
+  ];
+  const ASIA_COUNTRIES = [
+    "インドネシア",
+    "ベトナム",
+    "インド",
+    "中国",
+    "東ティモール",
+    "ミャンマー",
+    "タイ",
+    "ラオス",
+    "フィリピン",
+    "イエメン"
+  ];
+  const ALL_ORIGIN_COUNTRIES = [...new Set([
+    ...AFRICA_COUNTRIES,
+    ...LATIN_AMERICA_COUNTRIES,
+    ...ASIA_COUNTRIES
+  ])];
   const ORIGIN_COUNTRIES_BY_REGION = {
-    "アフリカ": ["エチオピア", "ケニア", "ルワンダ", "ブルンジ", "タンザニア", "ウガンダ", OTHER_OPTION],
-    "中南米": [
-      "ブラジル",
-      "コロンビア",
-      "グアテマラ",
-      "コスタリカ",
-      "ホンジュラス",
-      "エルサルバドル",
-      "ニカラグア",
-      "パナマ",
-      "メキシコ",
-      "ペルー",
-      "ボリビア",
-      OTHER_OPTION
-    ],
-    "アジア": [
-      "インドネシア",
-      "ベトナム",
-      "インド",
-      "中国",
-      "東ティモール",
-      "ミャンマー",
-      "タイ",
-      "ラオス",
-      "フィリピン",
-      "イエメン",
-      OTHER_OPTION
-    ],
-    [OTHER_OPTION]: [OTHER_OPTION]
+    "アフリカ": [...AFRICA_COUNTRIES, ADD_COUNTRY_OPTION],
+    "中南米": [...LATIN_AMERICA_COUNTRIES, ADD_COUNTRY_OPTION],
+    "アジア": [...ASIA_COUNTRIES, ADD_COUNTRY_OPTION],
+    [UNKNOWN_REGION]: [...ALL_ORIGIN_COUNTRIES, ADD_COUNTRY_OPTION]
   };
-  const ORIGIN_REGIONS = ["アフリカ", "中南米", "アジア", OTHER_OPTION];
+  const ORIGIN_REGIONS = ["アフリカ", "中南米", "アジア", UNKNOWN_REGION];
   const PROCESS_OPTIONS = [
     "ウォッシュド",
     "ナチュラル",
@@ -84,15 +97,16 @@
   ];
   const ROAST_LEVEL_OPTIONS = ["浅煎り", "中浅煎り", "中煎り", "中深煎り", "深煎り", OTHER_OPTION];
 
+  const SVG_NS = "http://www.w3.org/2000/svg";
   const ratingFields = [
-    { key: "acidity", id: "bean-rating-acidity" },
-    { key: "bitterness", id: "bean-rating-bitterness" },
-    { key: "sweetness", id: "bean-rating-sweetness" },
-    { key: "body", id: "bean-rating-body" },
-    { key: "aroma", id: "bean-rating-aroma" },
-    { key: "aftertaste", id: "bean-rating-aftertaste" },
-    { key: "drinkability", id: "bean-rating-drinkability" },
-    { key: "overall", id: "bean-rating-overall" }
+    { key: "acidity", label: "酸味", id: "bean-rating-acidity", chart: true },
+    { key: "bitterness", label: "苦味", id: "bean-rating-bitterness", chart: true },
+    { key: "sweetness", label: "甘み", id: "bean-rating-sweetness", chart: true },
+    { key: "body", label: "コク", id: "bean-rating-body", chart: true },
+    { key: "aroma", label: "香り", id: "bean-rating-aroma", chart: true },
+    { key: "aftertaste", label: "後味", id: "bean-rating-aftertaste", chart: true },
+    { key: "drinkability", label: "飲みやすさ", id: "bean-rating-drinkability", chart: true },
+    { key: "overall", label: "総合評価", id: "bean-rating-overall", chart: false }
   ].map((rating) => ({
     ...rating,
     element: document.getElementById(rating.id)
@@ -157,6 +171,53 @@
     return Number.isInteger(value) && value >= 1 && value <= 5 ? value : 3;
   }
 
+  function setRatingValue(key, value) {
+    const rating = ratingFields.find((item) => item.key === key);
+    if (!rating) return;
+    rating.element.value = String(ratingValue({ value }));
+  }
+
+  function updateRatingControls() {
+    ratingFields.forEach((rating) => {
+      ratingControls
+        .querySelectorAll(`[data-rating-key="${rating.key}"] .rating-button`)
+        .forEach((button) => {
+          const isActive = Number(button.dataset.value) === ratingValue(rating.element);
+          button.classList.toggle("is-active", isActive);
+          button.setAttribute("aria-pressed", String(isActive));
+        });
+    });
+  }
+
+  function renderRatingControls() {
+    ratingFields.forEach((rating) => {
+      const row = document.createElement("div");
+      row.className = "rating-control";
+      row.dataset.ratingKey = rating.key;
+
+      const label = document.createElement("span");
+      label.textContent = rating.label;
+
+      const buttons = document.createElement("div");
+      buttons.className = "rating-buttons";
+      buttons.setAttribute("role", "group");
+      buttons.setAttribute("aria-label", rating.label);
+
+      for (let value = 1; value <= 5; value += 1) {
+        const button = document.createElement("button");
+        button.className = "rating-button";
+        button.type = "button";
+        button.dataset.value = String(value);
+        button.textContent = String(value);
+        buttons.append(button);
+      }
+
+      row.append(label, buttons);
+      ratingControls.append(row);
+    });
+    updateRatingControls();
+  }
+
   function parseFlavorNotes(value) {
     return value
       .split(/[,\u3001]/)
@@ -177,7 +238,7 @@
     if (countries.includes(selectedCountry)) {
       fields.originCountry.value = selectedCountry;
     } else if (selectedCountry) {
-      fields.originCountry.value = OTHER_OPTION;
+      fields.originCountry.value = ADD_COUNTRY_OPTION;
       fields.originCountryOther.value = selectedCountry;
     }
 
@@ -185,11 +246,7 @@
   }
 
   function updateOriginOtherFields() {
-    const isOtherRegion = fields.originRegion.value === OTHER_OPTION;
-    const isOtherCountry = isOtherRegion || fields.originCountry.value === OTHER_OPTION;
-
-    setOtherFieldVisible(otherFields.originRegion, isOtherRegion);
-    setOtherFieldVisible(otherFields.originCountry, isOtherCountry);
+    setOtherFieldVisible(otherFields.originCountry, fields.originCountry.value === ADD_COUNTRY_OPTION);
   }
 
   function updateProcessOtherField() {
@@ -220,19 +277,29 @@
     return normalizeText(otherInput.value) || OTHER_OPTION;
   }
 
+  function selectRegion(value) {
+    if (ORIGIN_REGIONS.includes(value)) {
+      fields.originRegion.value = value;
+      return;
+    }
+    fields.originRegion.value = value ? UNKNOWN_REGION : "";
+  }
+
+  function getCountryValue() {
+    if (fields.originCountry.value !== ADD_COUNTRY_OPTION) return fields.originCountry.value;
+    return normalizeText(fields.originCountryOther.value) || ADD_COUNTRY_OPTION;
+  }
+
   function inferRegionFromCountry(country) {
     if (!country) return "";
     return ORIGIN_REGIONS.find((region) => (
-      region !== OTHER_OPTION && ORIGIN_COUNTRIES_BY_REGION[region]?.includes(country)
+      region !== UNKNOWN_REGION && ORIGIN_COUNTRIES_BY_REGION[region]?.includes(country)
     )) ?? "";
   }
 
   function getOriginFromForm() {
-    const selectedRegion = fields.originRegion.value;
-    const region = selectedRegion === OTHER_OPTION
-      ? normalizeText(fields.originRegionOther.value) || OTHER_OPTION
-      : selectedRegion;
-    const country = getSelectValueWithOther(fields.originCountry, fields.originCountryOther);
+    const region = fields.originRegion.value;
+    const country = getCountryValue();
 
     return {
       originRegion: region,
@@ -264,6 +331,109 @@
       ratings[rating.key] = ratingValue(rating.element);
       return ratings;
     }, {});
+  }
+
+  function getRadarPoint(centerX, centerY, radius, index, total) {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / total;
+    return {
+      x: centerX + Math.cos(angle) * radius,
+      y: centerY + Math.sin(angle) * radius
+    };
+  }
+
+  function createSvgElement(name, attributes = {}) {
+    const element = document.createElementNS(SVG_NS, name);
+    Object.entries(attributes).forEach(([key, value]) => {
+      element.setAttribute(key, String(value));
+    });
+    return element;
+  }
+
+  // 1〜5の評価値をSVGの多角形に変換して、味のバランスを小さく可視化します。
+  function renderRadarChart(ratings) {
+    const chartRatings = ratingFields.filter((rating) => rating.chart);
+    const centerX = 90;
+    const centerY = 88;
+    const radius = 54;
+    const labelRadius = 72;
+
+    radarChart.replaceChildren();
+
+    for (let level = 1; level <= 5; level += 1) {
+      const points = chartRatings
+        .map((_, index) => getRadarPoint(centerX, centerY, (radius * level) / 5, index, chartRatings.length))
+        .map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`)
+        .join(" ");
+      radarChart.append(createSvgElement("polygon", { class: "radar-grid", points }));
+    }
+
+    chartRatings.forEach((rating, index) => {
+      const axisEnd = getRadarPoint(centerX, centerY, radius, index, chartRatings.length);
+      radarChart.append(createSvgElement("line", {
+        class: "radar-axis",
+        x1: centerX,
+        y1: centerY,
+        x2: axisEnd.x,
+        y2: axisEnd.y
+      }));
+
+      const labelPoint = getRadarPoint(centerX, centerY, labelRadius, index, chartRatings.length);
+      const label = createSvgElement("text", {
+        class: "radar-label",
+        x: labelPoint.x,
+        y: labelPoint.y
+      });
+      label.textContent = rating.label;
+      radarChart.append(label);
+    });
+
+    const valuePoints = chartRatings
+      .map((rating, index) => {
+        const value = ratingValue({ value: ratings?.[rating.key] ?? 3 });
+        return getRadarPoint(centerX, centerY, (radius * value) / 5, index, chartRatings.length);
+      });
+
+    radarChart.append(createSvgElement("polygon", {
+      class: "radar-shape",
+      points: valuePoints.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ")
+    }));
+
+    valuePoints.forEach((point) => {
+      radarChart.append(createSvgElement("circle", {
+        class: "radar-point",
+        cx: point.x,
+        cy: point.y,
+        r: 2.8
+      }));
+    });
+  }
+
+  function renderFlavorTags(flavorNotes) {
+    const notes = Array.isArray(flavorNotes) ? flavorNotes : [];
+    flavorTags.replaceChildren();
+
+    if (notes.length === 0) {
+      const empty = document.createElement("span");
+      empty.className = "flavor-tag empty";
+      empty.textContent = "未入力";
+      flavorTags.append(empty);
+      return;
+    }
+
+    notes.forEach((note) => {
+      const tag = document.createElement("span");
+      tag.className = "flavor-tag";
+      tag.textContent = note;
+      flavorTags.append(tag);
+    });
+  }
+
+  function updateRadarChart() {
+    const ratings = buildRatingsFromForm();
+    overallOutput.value = String(ratings.overall ?? 3);
+    overallOutput.textContent = String(ratings.overall ?? 3);
+    renderRadarChart(ratings);
+    renderFlavorTags(parseFlavorNotes(fields.flavorNotesText.value));
   }
 
   // フォームの入力値を、docs/database-schema.md の beans 構造に変換します。
@@ -300,8 +470,10 @@
   function resetBeanForm() {
     beanForm.reset();
     fields.id.value = "";
+    beanDetailSection.open = false;
+    beanRatingEditor.open = false;
+    beanNoteSection.open = false;
     fields.originRegion.value = "";
-    fields.originRegionOther.value = "";
     fields.originCountryOther.value = "";
     updateOriginCountryOptions();
     fields.process.value = "";
@@ -314,6 +486,8 @@
       rating.element.value = "3";
     });
     fields.repeatRating.value = "3";
+    updateRatingControls();
+    updateRadarChart();
     beanFormMode.textContent = "新しい豆メモ";
     showBeanMessage("");
   }
@@ -325,7 +499,7 @@
     fields.id.value = bean.id;
     fields.name.value = bean.name ?? "";
     fields.roaster.value = bean.roaster ?? "";
-    selectOrOther(fields.originRegion, fields.originRegionOther, originRegion);
+    selectRegion(originRegion);
     updateOriginCountryOptions(originCountry);
     updateOriginOtherFields();
     selectOrOther(fields.process, fields.processOther, bean.process);
@@ -344,6 +518,8 @@
     ratingFields.forEach((rating) => {
       rating.element.value = String(bean.ratings?.[rating.key] ?? 3);
     });
+    updateRatingControls();
+    updateRadarChart();
     beanFormMode.textContent = "豆メモを編集中";
     showBeanMessage("");
     fields.name.focus();
@@ -491,7 +667,7 @@
   updateOriginCountryOptions();
   fillSelect(fields.process, PROCESS_OPTIONS, "精製方法を選択");
   fillSelect(fields.roastLevel, ROAST_LEVEL_OPTIONS, "焙煎度を選択");
-  ratingFields.forEach((rating) => createRatingOptions(rating.element));
+  renderRatingControls();
   createRatingOptions(fields.repeatRating);
   resetBeanForm();
 
@@ -505,6 +681,18 @@
   fields.originCountry.addEventListener("change", updateOriginOtherFields);
   fields.process.addEventListener("change", updateProcessOtherField);
   fields.roastLevel.addEventListener("change", updateRoastLevelOtherField);
+  ratingControls.addEventListener("click", (event) => {
+    const button = event.target.closest(".rating-button");
+    const control = event.target.closest(".rating-control");
+    if (!button || !control) return;
+
+    setRatingValue(control.dataset.ratingKey, button.dataset.value);
+    updateRatingControls();
+    updateRadarChart();
+  });
+  fields.flavorNotesText.addEventListener("input", () => {
+    renderFlavorTags(parseFlavorNotes(fields.flavorNotesText.value));
+  });
   beanFormClear.addEventListener("click", resetBeanForm);
   beanForm.addEventListener("submit", handleBeanSubmit);
   beanList.addEventListener("click", handleBeanListClick);
