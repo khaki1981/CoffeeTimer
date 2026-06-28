@@ -6,14 +6,20 @@
   const beanFormClear = document.getElementById("bean-form-clear");
   const beanMessage = document.getElementById("bean-message");
   const beanList = document.getElementById("bean-list");
+  const roasterList = document.getElementById("roaster-list");
 
   const fields = {
     id: document.getElementById("bean-id"),
     name: document.getElementById("bean-name"),
     roaster: document.getElementById("bean-roaster"),
-    origin: document.getElementById("bean-origin"),
+    originRegion: document.getElementById("bean-origin-region"),
+    originCountry: document.getElementById("bean-origin-country"),
+    originRegionOther: document.getElementById("bean-origin-region-other"),
+    originCountryOther: document.getElementById("bean-origin-country-other"),
     process: document.getElementById("bean-process"),
+    processOther: document.getElementById("bean-process-other"),
     roastLevel: document.getElementById("bean-roast-level"),
+    roastLevelOther: document.getElementById("bean-roast-level-other"),
     purchaseDate: document.getElementById("bean-purchase-date"),
     openedDate: document.getElementById("bean-opened-date"),
     price: document.getElementById("bean-price"),
@@ -24,6 +30,59 @@
     repeatRating: document.getElementById("bean-repeat-rating"),
     isFavorite: document.getElementById("bean-is-favorite")
   };
+
+  const otherFields = {
+    originRegion: document.getElementById("bean-origin-region-other-field"),
+    originCountry: document.getElementById("bean-origin-country-other-field"),
+    process: document.getElementById("bean-process-other-field"),
+    roastLevel: document.getElementById("bean-roast-level-other-field")
+  };
+
+  const OTHER_OPTION = "その他";
+  const ORIGIN_COUNTRIES_BY_REGION = {
+    "アフリカ": ["エチオピア", "ケニア", "ルワンダ", "ブルンジ", "タンザニア", "ウガンダ", OTHER_OPTION],
+    "中南米": [
+      "ブラジル",
+      "コロンビア",
+      "グアテマラ",
+      "コスタリカ",
+      "ホンジュラス",
+      "エルサルバドル",
+      "ニカラグア",
+      "パナマ",
+      "メキシコ",
+      "ペルー",
+      "ボリビア",
+      OTHER_OPTION
+    ],
+    "アジア": [
+      "インドネシア",
+      "ベトナム",
+      "インド",
+      "中国",
+      "東ティモール",
+      "ミャンマー",
+      "タイ",
+      "ラオス",
+      "フィリピン",
+      "イエメン",
+      OTHER_OPTION
+    ],
+    [OTHER_OPTION]: [OTHER_OPTION]
+  };
+  const ORIGIN_REGIONS = ["アフリカ", "中南米", "アジア", OTHER_OPTION];
+  const PROCESS_OPTIONS = [
+    "ウォッシュド",
+    "ナチュラル",
+    "ハニー",
+    "アナエロビック",
+    "ダブルアナエロビック",
+    "カーボニックマセレーション",
+    "ウェットハル",
+    "スマトラ式",
+    OTHER_OPTION
+  ];
+  const ROAST_LEVEL_OPTIONS = ["浅煎り", "中浅煎り", "中煎り", "中深煎り", "深煎り", OTHER_OPTION];
 
   const ratingFields = [
     { key: "acidity", id: "bean-rating-acidity" },
@@ -41,6 +100,21 @@
 
   let beans = [];
 
+  function fillSelect(select, options, placeholder) {
+    select.replaceChildren();
+    const placeholderOption = document.createElement("option");
+    placeholderOption.value = "";
+    placeholderOption.textContent = placeholder;
+    select.append(placeholderOption);
+
+    options.forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      select.append(option);
+    });
+  }
+
   function createRatingOptions(select) {
     for (let value = 1; value <= 5; value += 1) {
       const option = document.createElement("option");
@@ -53,6 +127,19 @@
 
   function showBeanMessage(message) {
     beanMessage.textContent = message;
+  }
+
+  function updateRoasterList() {
+    const roasters = [...new Set(beans
+      .map((bean) => bean.roaster?.trim())
+      .filter(Boolean))]
+      .sort((first, second) => first.localeCompare(second, "ja"));
+
+    roasterList.replaceChildren(...roasters.map((roaster) => {
+      const option = document.createElement("option");
+      option.value = roaster;
+      return option;
+    }));
   }
 
   function normalizeText(value) {
@@ -75,6 +162,83 @@
       .split(/[,\u3001]/)
       .map((note) => note.trim())
       .filter(Boolean);
+  }
+
+  function setOtherFieldVisible(field, isVisible) {
+    field.hidden = !isVisible;
+  }
+
+  function updateOriginCountryOptions(selectedCountry = "") {
+    const region = fields.originRegion.value;
+    const countries = ORIGIN_COUNTRIES_BY_REGION[region] ?? [];
+    fillSelect(fields.originCountry, countries, region ? "国を選択" : "地域を先に選択");
+    fields.originCountry.disabled = countries.length === 0;
+
+    if (countries.includes(selectedCountry)) {
+      fields.originCountry.value = selectedCountry;
+    } else if (selectedCountry) {
+      fields.originCountry.value = OTHER_OPTION;
+      fields.originCountryOther.value = selectedCountry;
+    }
+
+    updateOriginOtherFields();
+  }
+
+  function updateOriginOtherFields() {
+    const isOtherRegion = fields.originRegion.value === OTHER_OPTION;
+    const isOtherCountry = isOtherRegion || fields.originCountry.value === OTHER_OPTION;
+
+    setOtherFieldVisible(otherFields.originRegion, isOtherRegion);
+    setOtherFieldVisible(otherFields.originCountry, isOtherCountry);
+  }
+
+  function updateProcessOtherField() {
+    setOtherFieldVisible(otherFields.process, fields.process.value === OTHER_OPTION);
+  }
+
+  function updateRoastLevelOtherField() {
+    setOtherFieldVisible(otherFields.roastLevel, fields.roastLevel.value === OTHER_OPTION);
+  }
+
+  function selectOrOther(select, otherInput, value) {
+    const normalizedValue = value ?? "";
+    const hasOption = [...select.options].some((option) => option.value === normalizedValue);
+    if (hasOption) {
+      select.value = normalizedValue;
+      otherInput.value = "";
+    } else if (normalizedValue) {
+      select.value = OTHER_OPTION;
+      otherInput.value = normalizedValue;
+    } else {
+      select.value = "";
+      otherInput.value = "";
+    }
+  }
+
+  function getSelectValueWithOther(select, otherInput) {
+    if (select.value !== OTHER_OPTION) return select.value;
+    return normalizeText(otherInput.value) || OTHER_OPTION;
+  }
+
+  function inferRegionFromCountry(country) {
+    if (!country) return "";
+    return ORIGIN_REGIONS.find((region) => (
+      region !== OTHER_OPTION && ORIGIN_COUNTRIES_BY_REGION[region]?.includes(country)
+    )) ?? "";
+  }
+
+  function getOriginFromForm() {
+    const selectedRegion = fields.originRegion.value;
+    const region = selectedRegion === OTHER_OPTION
+      ? normalizeText(fields.originRegionOther.value) || OTHER_OPTION
+      : selectedRegion;
+    const country = getSelectValueWithOther(fields.originCountry, fields.originCountryOther);
+
+    return {
+      originRegion: region,
+      originCountry: country,
+      origin: country || region
+    };
   }
 
   function formatDateKey(date) {
@@ -107,14 +271,17 @@
     const now = new Date().toISOString();
     const editingId = fields.id.value;
     const existingBean = beans.find((bean) => bean.id === editingId);
+    const origin = getOriginFromForm();
 
     return {
       id: editingId || await createBeanId(),
       name: normalizeText(fields.name.value),
       roaster: normalizeText(fields.roaster.value),
-      origin: normalizeText(fields.origin.value),
-      process: normalizeText(fields.process.value),
-      roastLevel: normalizeText(fields.roastLevel.value),
+      originRegion: origin.originRegion,
+      originCountry: origin.originCountry,
+      origin: origin.origin,
+      process: getSelectValueWithOther(fields.process, fields.processOther),
+      roastLevel: getSelectValueWithOther(fields.roastLevel, fields.roastLevelOther),
       purchaseDate: fields.purchaseDate.value,
       openedDate: fields.openedDate.value,
       price: numberOrNull(fields.price.value),
@@ -133,6 +300,16 @@
   function resetBeanForm() {
     beanForm.reset();
     fields.id.value = "";
+    fields.originRegion.value = "";
+    fields.originRegionOther.value = "";
+    fields.originCountryOther.value = "";
+    updateOriginCountryOptions();
+    fields.process.value = "";
+    fields.processOther.value = "";
+    updateProcessOtherField();
+    fields.roastLevel.value = "";
+    fields.roastLevelOther.value = "";
+    updateRoastLevelOtherField();
     ratingFields.forEach((rating) => {
       rating.element.value = "3";
     });
@@ -142,12 +319,19 @@
   }
 
   function fillBeanForm(bean) {
+    const originCountry = bean.originCountry || bean.origin || "";
+    const originRegion = bean.originRegion || inferRegionFromCountry(originCountry);
+
     fields.id.value = bean.id;
     fields.name.value = bean.name ?? "";
     fields.roaster.value = bean.roaster ?? "";
-    fields.origin.value = bean.origin ?? "";
-    fields.process.value = bean.process ?? "";
-    fields.roastLevel.value = bean.roastLevel ?? "";
+    selectOrOther(fields.originRegion, fields.originRegionOther, originRegion);
+    updateOriginCountryOptions(originCountry);
+    updateOriginOtherFields();
+    selectOrOther(fields.process, fields.processOther, bean.process);
+    updateProcessOtherField();
+    selectOrOther(fields.roastLevel, fields.roastLevelOther, bean.roastLevel);
+    updateRoastLevelOtherField();
     fields.purchaseDate.value = bean.purchaseDate ?? "";
     fields.openedDate.value = bean.openedDate ?? "";
     fields.price.value = bean.price ?? "";
@@ -225,6 +409,7 @@
   async function renderBeanList() {
     try {
       beans = await getAllBeans();
+      updateRoasterList();
       beanList.replaceChildren();
 
       if (beans.length === 0) {
@@ -302,6 +487,10 @@
     }
   }
 
+  fillSelect(fields.originRegion, ORIGIN_REGIONS, "地域を選択");
+  updateOriginCountryOptions();
+  fillSelect(fields.process, PROCESS_OPTIONS, "精製方法を選択");
+  fillSelect(fields.roastLevel, ROAST_LEVEL_OPTIONS, "焙煎度を選択");
   ratingFields.forEach((rating) => createRatingOptions(rating.element));
   createRatingOptions(fields.repeatRating);
   resetBeanForm();
@@ -309,6 +498,13 @@
   beanMemoButton.addEventListener("click", () => {
     setBeanMemoOpen(beanMemoPanel.hidden);
   });
+  fields.originRegion.addEventListener("change", () => {
+    fields.originCountryOther.value = "";
+    updateOriginCountryOptions();
+  });
+  fields.originCountry.addEventListener("change", updateOriginOtherFields);
+  fields.process.addEventListener("change", updateProcessOtherField);
+  fields.roastLevel.addEventListener("change", updateRoastLevelOtherField);
   beanFormClear.addEventListener("click", resetBeanForm);
   beanForm.addEventListener("submit", handleBeanSubmit);
   beanList.addEventListener("click", handleBeanListClick);

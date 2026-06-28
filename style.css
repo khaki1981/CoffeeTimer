@@ -596,6 +596,10 @@ input[type="range"] {
   font-size: 0.76rem;
 }
 
+.bean-field[hidden] {
+  display: none;
+}
+
 .bean-field-grid,
 .rating-grid {
   display: grid;

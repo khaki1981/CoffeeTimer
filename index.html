@@ -165,19 +165,42 @@
           </label>
           <label class="bean-field">
             <span>ロースター / 購入店</span>
-            <input id="bean-roaster" type="text" maxlength="80" autocomplete="off" />
+            <input id="bean-roaster" list="roaster-list" type="text" maxlength="80" autocomplete="off" />
+            <datalist id="roaster-list"></datalist>
           </label>
-          <label class="bean-field">
-            <span>産地</span>
-            <input id="bean-origin" type="text" maxlength="80" autocomplete="off" />
+          <div class="bean-field-grid">
+            <label class="bean-field">
+              <span>地域</span>
+              <select id="bean-origin-region"></select>
+            </label>
+            <label class="bean-field">
+              <span>国</span>
+              <select id="bean-origin-country"></select>
+            </label>
+          </div>
+          <label id="bean-origin-region-other-field" class="bean-field" hidden>
+            <span>その他の地域</span>
+            <input id="bean-origin-region-other" type="text" maxlength="80" autocomplete="off" />
+          </label>
+          <label id="bean-origin-country-other-field" class="bean-field" hidden>
+            <span>その他の国</span>
+            <input id="bean-origin-country-other" type="text" maxlength="80" autocomplete="off" />
           </label>
           <label class="bean-field">
             <span>精製方法</span>
-            <input id="bean-process" type="text" maxlength="60" autocomplete="off" />
+            <select id="bean-process"></select>
+          </label>
+          <label id="bean-process-other-field" class="bean-field" hidden>
+            <span>その他の精製方法</span>
+            <input id="bean-process-other" type="text" maxlength="60" autocomplete="off" />
           </label>
           <label class="bean-field">
             <span>焙煎度</span>
-            <input id="bean-roast-level" type="text" maxlength="60" autocomplete="off" />
+            <select id="bean-roast-level"></select>
+          </label>
+          <label id="bean-roast-level-other-field" class="bean-field" hidden>
+            <span>その他の焙煎度</span>
+            <input id="bean-roast-level-other" type="text" maxlength="60" autocomplete="off" />
           </label>
           <div class="bean-field-grid">
             <label class="bean-field">
