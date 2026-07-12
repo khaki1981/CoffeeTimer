@@ -17,6 +17,7 @@
     try {
       const menus = JSON.parse(localStorage.getItem(MENUS_STORAGE_KEY));
       const index = Number(menuSelect.value);
+      if (!Number.isInteger(index)) return [];
       const menu = Array.isArray(menus) ? menus[Number.isInteger(index) ? index : 0] : null;
       return menu && Array.isArray(menu.steps) ? menu.steps : [];
     } catch (error) {
@@ -116,4 +117,98 @@
   window.addEventListener("storage", render);
 
   render();
+
+  const NEW_MENU_VALUE = "__add_new_menu__";
+  const DRAFT_VALUE = "__drafting_new__";
+  const editButton = document.getElementById("edit-button");
+  const editor = document.getElementById("step-editor");
+  const newMenuButton = document.getElementById("new-menu-button");
+  const menuNameInput = document.getElementById("menu-name");
+  const saveMenuButton = document.getElementById("save-menu-button");
+
+  if (editButton && editor && newMenuButton && menuNameInput) {
+    let lastValidValue = menuSelect.value;
+    let isDraftingNewMenu = false;
+
+    function ensureAddOption() {
+      let option = menuSelect.querySelector(`option[value="${NEW_MENU_VALUE}"]`);
+      if (!option) {
+        option = document.createElement("option");
+        option.value = NEW_MENU_VALUE;
+        option.textContent = "新規メニューを追加";
+      }
+      if (menuSelect.lastElementChild !== option) menuSelect.append(option);
+    }
+
+    function ensureDraftOption() {
+      if (menuSelect.querySelector(`option[value="${DRAFT_VALUE}"]`)) return;
+
+      const option = document.createElement("option");
+      option.value = DRAFT_VALUE;
+      option.textContent = "新規作成中";
+      option.hidden = true;
+      menuSelect.prepend(option);
+    }
+
+    function restorePreviousSelection() {
+      if (!isDraftingNewMenu) return;
+      menuSelect.value = lastValidValue;
+      isDraftingNewMenu = false;
+      window.setTimeout(render, 0);
+    }
+
+    new MutationObserver(ensureAddOption).observe(menuSelect, { childList: true });
+    ensureAddOption();
+    ensureDraftOption();
+
+    menuSelect.addEventListener(
+      "change",
+      (event) => {
+        if (menuSelect.value !== NEW_MENU_VALUE) {
+          if (menuSelect.value !== DRAFT_VALUE) {
+            lastValidValue = menuSelect.value;
+            isDraftingNewMenu = false;
+          }
+          return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        ensureDraftOption();
+        menuSelect.value = DRAFT_VALUE;
+        isDraftingNewMenu = true;
+
+        if (editor.hidden) editButton.click();
+        newMenuButton.click();
+
+        menuNameInput.value = "";
+        menuNameInput.dispatchEvent(new Event("input", { bubbles: true }));
+        menuNameInput.focus();
+        window.setTimeout(render, 0);
+      },
+      true
+    );
+
+    editButton.addEventListener("click", () => {
+      if (editor.hidden) restorePreviousSelection();
+    });
+
+    if (saveMenuButton) {
+      saveMenuButton.addEventListener("click", () => {
+        window.setTimeout(() => {
+          if (menuSelect.value === DRAFT_VALUE) {
+            isDraftingNewMenu = true;
+            render();
+            return;
+          }
+
+          isDraftingNewMenu = false;
+          lastValidValue = menuSelect.value;
+          ensureAddOption();
+          render();
+        }, 0);
+      });
+    }
+  }
 })();
