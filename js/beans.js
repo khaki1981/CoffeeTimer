@@ -525,40 +525,76 @@
     fields.name.focus();
   }
 
-  function formatMeta(bean) {
-    return [
-      bean.roaster,
-      bean.origin,
-      bean.roastLevel
-    ].filter(Boolean).join(" / ") || "基本情報未入力";
+  function compactTextValues(values) {
+    return values
+      .map((value) => (typeof value === "string" ? value.trim() : ""))
+      .filter(Boolean);
+  }
+
+  function flavorNotesForList(value) {
+    if (Array.isArray(value)) return compactTextValues(value);
+    if (typeof value === "string") return compactTextValues(value.split(/[,\u3001]/));
+    return [];
+  }
+
+  function createTextElement(tagName, className, text) {
+    const element = document.createElement(tagName);
+    element.className = className;
+    element.textContent = text;
+    return element;
+  }
+
+  function getBeanOriginParts(bean) {
+    const country = bean.originCountry || bean.origin || "";
+    return compactTextValues([bean.originRegion, country]);
   }
 
   function createBeanCard(bean) {
     const card = document.createElement("article");
     card.className = "bean-card";
 
+    const header = document.createElement("div");
+    header.className = "bean-card-header";
+
+    const titleGroup = document.createElement("div");
+    titleGroup.className = "bean-card-title-group";
+
+    const name = createTextElement("h4", "bean-card-name", bean.name);
+    titleGroup.append(name);
+
+    if (bean.isFavorite) {
+      const favorite = createTextElement("span", "bean-favorite", "お気に入り");
+      titleGroup.append(favorite);
+    }
+
+    const rating = createTextElement("div", "bean-card-rating-badge", `総合 ${bean.ratings?.overall ?? 3}`);
+    header.append(titleGroup, rating);
+
     const main = document.createElement("div");
     main.className = "bean-card-main";
 
-    const title = document.createElement("div");
-    title.className = "bean-card-title";
-    const name = document.createElement("span");
-    name.textContent = bean.name;
-    const favorite = document.createElement("span");
-    favorite.className = "bean-favorite";
-    favorite.textContent = bean.isFavorite ? "★" : "☆";
-    favorite.setAttribute("aria-label", bean.isFavorite ? "お気に入り" : "お気に入りではありません");
-    title.append(name, favorite);
+    if (bean.roaster) {
+      main.append(createTextElement("p", "bean-card-roaster", bean.roaster));
+    }
 
-    const meta = document.createElement("div");
-    meta.className = "bean-card-meta";
-    meta.textContent = formatMeta(bean);
+    const detailItems = [
+      ...getBeanOriginParts(bean),
+      ...compactTextValues([bean.process, bean.roastLevel])
+    ];
+    if (detailItems.length > 0) {
+      const meta = createTextElement("p", "bean-card-meta", detailItems.join(" / "));
+      main.append(meta);
+    }
 
-    const rating = document.createElement("div");
-    rating.className = "bean-card-rating";
-    rating.textContent = `総合評価 ${bean.ratings?.overall ?? 3} / 5`;
-
-    main.append(title, meta, rating);
+    const flavorNotes = flavorNotesForList(bean.flavorNotes);
+    if (flavorNotes.length > 0) {
+      const flavors = document.createElement("div");
+      flavors.className = "bean-card-flavors";
+      flavorNotes.forEach((note) => {
+        flavors.append(createTextElement("span", "bean-card-flavor-tag", note));
+      });
+      main.append(flavors);
+    }
 
     const actions = document.createElement("div");
     actions.className = "bean-card-actions";
@@ -578,7 +614,7 @@
     deleteButton.dataset.id = bean.id;
 
     actions.append(editButton, deleteButton);
-    card.append(main, actions);
+    card.append(header, main, actions);
     return card;
   }
 
@@ -589,9 +625,20 @@
       beanList.replaceChildren();
 
       if (beans.length === 0) {
-        const empty = document.createElement("p");
-        empty.className = "bean-empty";
-        empty.textContent = "保存された豆メモはまだありません。";
+        const empty = document.createElement("article");
+        empty.className = "bean-empty-card";
+
+        const icon = createTextElement("span", "bean-empty-icon", "☕");
+        icon.setAttribute("aria-hidden", "true");
+        const title = createTextElement("h3", "bean-empty-title", "まだ豆メモがありません");
+        const description = createTextElement("p", "bean-empty", "新規から最初の豆を登録してください。");
+        const action = document.createElement("button");
+        action.className = "text-button";
+        action.type = "button";
+        action.dataset.action = "new";
+        action.textContent = "新規登録";
+
+        empty.append(icon, title, description, action);
         beanList.append(empty);
         return;
       }
@@ -640,6 +687,13 @@
   async function handleBeanListClick(event) {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
+
+    if (button.dataset.action === "new") {
+      resetBeanForm();
+      beanForm.scrollIntoView({ block: "start", behavior: "smooth" });
+      fields.name.focus();
+      return;
+    }
 
     const bean = beans.find((item) => item.id === button.dataset.id);
     if (!bean) return;
