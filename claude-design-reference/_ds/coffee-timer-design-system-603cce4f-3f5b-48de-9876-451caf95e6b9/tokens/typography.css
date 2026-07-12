@@ -1,0 +1,19 @@
+:root {
+  /* ===== Type scale ===== */
+  --text-timer: clamp(4rem, 18vw, 6rem);   /* 64–96px timer digits */
+  --text-timer-sub: 2rem;                  /* 32px secondary timers */
+  --text-display: 1.75rem;                 /* 28px app title */
+  --text-h1: 1.375rem;                     /* 22px screen title */
+  --text-h2: 1.0625rem;                    /* 17px section heading */
+  --text-h3: 0.9375rem;                    /* 15px sub heading */
+  --text-body: 0.9375rem;                  /* 15px body */
+  --text-label: 0.8125rem;                 /* 13px form labels */
+  --text-caption: 0.75rem;                 /* 12px meta, captions */
+
+  --leading-tight: 1.2;
+  --leading-body: 1.7;    /* Japanese body needs generous leading */
+  --leading-heading: 1.35;
+
+  --tracking-heading: 0.02em;
+  --tracking-wide: 0.06em; /* uppercase EN labels */
+}

@@ -15,20 +15,13 @@
         id="sound-settings-button"
         class="control-button sound"
         type="button"
-        aria-label="髻ｳ險ｭ螳壹ｒ髢九￥"
+        aria-label="音設定を開く"
         aria-expanded="false"
         aria-controls="sound-settings"
-      >
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M9 18V5l12-2v13"></path>
-          <circle cx="6" cy="18" r="3"></circle>
-          <circle cx="18" cy="16" r="3"></circle>
-        </svg>
-      </button>
+      ><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg></button>
     </div>
 
     <div class="layout-timer">
-
     <p class="current-step" id="current-step" aria-live="polite">現在：蒸らし</p>
 
     <section class="timer-display" aria-label="残り時間">
@@ -37,34 +30,19 @@
 
     <p class="status" id="status-text" aria-live="polite">準備完了</p>
 
-    <section class="progress-area" aria-label="progress">
+    <section class="progress-area" aria-label="抽出の進捗">
       <div id="progress-chips" class="progress-chips"></div>
-      <div class="progress-track" aria-hidden="true">
-        <div id="progress-bar-fill" class="progress-bar-fill"></div>
-      </div>
+      <div class="progress-track" aria-hidden="true"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
       <p id="next-step-text" class="next-step" aria-live="polite"></p>
     </section>
 
     <div class="controls" aria-label="タイマー操作">
-      <button id="start-button" class="control-button start" type="button" aria-label="開始">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polygon points="6 3 20 12 6 21 6 3"></polygon>
-        </svg>
-      </button>
-      <button id="pause-button" class="control-button" type="button" aria-label="一時停止">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="14" y="4" width="4" height="16" rx="1"></rect>
-          <rect x="6" y="4" width="4" height="16" rx="1"></rect>
-        </svg>
-      </button>
-      <button id="reset-button" class="control-button" type="button" aria-label="リセット">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-        </svg>
-      </button>
+      <button id="start-button" class="control-button start" type="button" aria-label="開始"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg></button>
+      <button id="pause-button" class="control-button" type="button" aria-label="一時停止"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="4" width="4" height="16" rx="1"></rect><rect x="6" y="4" width="4" height="16" rx="1"></rect></svg></button>
+      <button id="reset-button" class="control-button" type="button" aria-label="リセット"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg></button>
+    </div>
     </div>
 
-    </div>
     <div class="layout-side">
     <div class="step-selector">
       <div class="preset-field">
@@ -174,7 +152,7 @@
       <div id="step-list" class="step-list"></div>
 
       <button id="add-step-button" class="add-step-button" type="button" aria-label="工程を追加">＋</button>
-      <button id="save-menu-button" class="save-button" type="button">記録</button>
+      <button id="save-menu-button" class="save-button" type="button">保存</button>
       <p id="editor-message" class="editor-message" aria-live="polite"></p>
     </section>
 

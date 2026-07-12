@@ -1,0 +1,46 @@
+:root {
+  /* ===== Base palette ===== */
+  /* Backgrounds — the bright Nordic kitchen */
+  --ivory: #F6F3EC;        /* app background */
+  --greige: #ECE8DF;       /* secondary surface, wells, inset areas */
+  --paper: #FFFEFA;        /* cards, elevated surfaces */
+
+  /* Browns — the wooden coffee tools (accents, never full backgrounds) */
+  --wood-700: #3F3028;     /* ink: primary text */
+  --wood-600: #6B4A36;     /* primary brown: buttons, headings, strong borders */
+  --wood-400: #A98267;     /* muted wood: secondary text on light, icons */
+  --wood-300: #C99A68;     /* light wood: highlights, active fills, chart fill */
+
+  /* Accents — small doses only */
+  --sage: #7F9684;         /* success, completed steps, "brewing" state */
+  --bluegray: #8297A3;     /* info, links, cool secondary accent */
+  --terracotta: #C87958;   /* attention, favorites, warm emphasis, delete-ish */
+
+  /* Derived tints (oklch-mixed from base palette) */
+  --sage-soft: #E6EBE4;
+  --bluegray-soft: #E4E9EC;
+  --terracotta-soft: #F4E4DB;
+  --wood-soft: #F0E5D8;    /* light wood tint for chips/active rows */
+
+  /* ===== Semantic aliases ===== */
+  --bg-app: var(--ivory);
+  --bg-well: var(--greige);
+  --surface-card: var(--paper);
+
+  --text-body: var(--wood-700);
+  --text-heading: var(--wood-600);
+  --text-muted: #8C7B6E;   /* warm gray between wood-400 and greige */
+  --text-on-brown: #FFFEFA;
+
+  --border-line: #E0DACD;  /* hairline on ivory/paper */
+  --border-strong: #CFC6B5;
+  --border-brown: var(--wood-600);
+
+  --accent-primary: var(--wood-600);
+  --accent-active: var(--wood-300);
+  --accent-success: var(--sage);
+  --accent-info: var(--bluegray);
+  --accent-warm: var(--terracotta);
+
+  --focus-ring: #B08A66;
+}

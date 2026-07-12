@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="stylesheet" href="_ds/coffee-timer-design-system-603cce4f-3f5b-48de-9876-451caf95e6b9/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/coffee-timer-design-system-603cce4f-3f5b-48de-9876-451caf95e6b9/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/coffee-timer-design-system-603cce4f-3f5b-48de-9876-451caf95e6b9/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/coffee-timer-design-system-603cce4f-3f5b-48de-9876-451caf95e6b9/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/coffee-timer-design-system-603cce4f-3f5b-48de-9876-451caf95e6b9/tokens/effects.css">
+  <link rel="stylesheet" href="_ds/coffee-timer-design-system-603cce4f-3f5b-48de-9876-451caf95e6b9/tokens/base.css">
+  <link rel="stylesheet" href="_ds/coffee-timer-design-system-603cce4f-3f5b-48de-9876-451caf95e6b9/styles.css">
+  <script src="_ds/coffee-timer-design-system-603cce4f-3f5b-48de-9876-451caf95e6b9/_ds_bundle.js"></script>
+  <style>
+    body { background: #F6F3EC; margin: 0; font-family: "Zen Kaku Gothic New", sans-serif; color: #3F3028; }
+    a { color: #8297A3; text-decoration: none; }
+    a:hover { color: #6B4A36; text-decoration: underline; }
+  </style>
+</helmet>
+
+<section style="padding: 48px; display: flex; flex-direction: column; gap: 32px;">
+
+  <div style="max-width: 720px; display: flex; flex-direction: column; gap: 8px;">
+    <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 28px; color: #6B4A36;">Coffee Timer — UI再設計 提案</div>
+    <div style="font-size: 14px; color: #8C7B6E; line-height: 1.7;">コードは未変更です。現状分析（<a href="#1a">1a</a>）と、デザインシステムを適用した画面構成案（<a href="#1b">1b</a>〜<a href="#1f">1f</a>）をまとめました。確認後、画面ごとに段階実装へ進みます。</div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;">
+
+    <!-- ============ 1a 提案ドキュメント ============ -->
+    <div id="1a" data-screen-label="提案ドキュメント" style="width: 680px; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #6B4A36; color: #FFFEFA; font-family: Outfit, sans-serif; font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 999px;">1a</span>
+        <span style="font-size: 14px; font-weight: 700; color: #6B4A36;">分析・方針・実装計画</span>
+      </div>
+      <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 32px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 28px; font-size: 13.5px; line-height: 1.75;">
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 16px; color: #6B4A36;">A. 現在のUIの分析</div>
+          <div style="color: #3F3028;"><strong style="color: #7F9684;">良い点：</strong>HTMLがセマンティック（aria-live / aria-expanded / label関連付け）。id設計が明確で、機能ごとにセクションが分離。タイマー数字はすでに最大要素。豆フォームは折りたたみ（details）を導入済み。</div>
+          <div style="color: #3F3028;"><strong style="color: #C87958;">課題：</strong>
+            ① 画面全体が濃いブラウンで「明るい北欧」と正反対。
+            ② ▶ ⏸ ■ ♪ の4ボタンが同じ大きさ・同じ強さで、開始が主役に見えない。
+            ③ 全工程の進捗表示がなく、現在工程がテキスト1行のみ。次の工程が見えない。
+            ④ PCでは小さなカードが中央に浮くだけで余白が死んでいる。
+            ⑤ 豆フォームは項目が多く1本の長いスクロールになりがち。折りたたみが閉じていると入力済みか分からない。
+            ⑥ アイコンがunicodeグリフと絵文字の混在で線の太さが不揃い。
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 16px; color: #6B4A36;">B. 全体のデザイン方針</div>
+          <div>デザインシステムをそのまま適用します。背景はアイボリー（約70%）、グレージュの窪み・罫線（約20%）、ブラウンはボタン・見出し・重要枠のみ（約8%）、セージ／ブルーグレー／テラコッタは各コンポーネントに1色まで（約2%）。書体は Zen Kaku Gothic New（和文）＋ Outfit（数字・見出し）、タイマー数字は tabular-nums。角丸は入力10px / ボタン14px / カード20px。影は暖色の低い影のみ。木目テクスチャは使わず、ウッドブラウンの「色」で木の温もりを表現。アイコンはLucide線画（1.75px stroke）に統一し、絵文字は☕と⭐のみ残します。</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 16px; color: #6B4A36;">C. 画面構成案（右のモックアップ）</div>
+          <div><a href="#1b">1b</a> スマホ版タイマー（待機中／実行中）・<a href="#1c">1c</a> PC版タイマー（2カラム）・<a href="#1d">1d</a> 豆メモ一覧と入力フォーム・<a href="#1e">1e</a> 音設定・<a href="#1f">1f</a> メニュー編集。すべてデザインシステムの実コンポーネントで組んでいます。</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 16px; color: #6B4A36;">D. 情報の優先順位</div>
+          <div>
+            <strong>最大：</strong>残り時間（Outfit 600・約76px・カード内で唯一の巨大要素）。
+            <strong>2番手：</strong>現在の工程（数字の直上、実行中はセージのドット付き）。
+            <strong>3番手：</strong>開始ボタン（唯一のブラウン塗り・72px円形。一時停止／停止は52pxの輪郭のみ）。
+            <strong>4番手：</strong>工程チップ＋セージの進捗バー、その下に「次：◯◯」。
+            <strong>控えめ：</strong>音設定はヘッダー右上の小アイコンへ移動。メニュー選択・豆メモはカード下部、実行中は非表示にして操作を減らします。
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 16px; color: #6B4A36;">E. コンポーネント一覧（既存idとの対応）</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 24px; font-size: 13px;">
+            <div>・TimerDisplay → #time-display / #current-step / #status-text</div>
+            <div>・ProgressSteps → 新規追加（進捗表示）</div>
+            <div>・ControlButton → #start-button 他3つ</div>
+            <div>・Button → #edit-button / #save-menu-button 他</div>
+            <div>・Card → .timer-card / 各section</div>
+            <div>・Select → #timer-preset / #alert-sound 他</div>
+            <div>・Input → #menu-name / #bean-name 他</div>
+            <div>・Toggle → #alert-enabled / #bgm-enabled</div>
+            <div>・Slider → #alert-volume / #bgm-volume</div>
+            <div>・Collapsible → details.bean-collapsible</div>
+            <div>・RatingScale → #bean-rating-controls</div>
+            <div>・RadarChart → #bean-radar-chart</div>
+            <div>・BeanCard → #bean-list の各項目</div>
+            <div>・Tag → .flavor-tags</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 16px; color: #6B4A36;">F. 実装順序</div>
+          <div>① CSS変数をデザインシステムのトークンへ差し替え（HTMLは無変更・最も安全） → ② 背景・文字・余白 → ③ タイマーカード → ④ 操作ボタン（▶をLucideへ、サイズ差を付ける） → ⑤ ProgressSteps追加（HTML追記のみ、JSは工程indexを渡す1行） → ⑥ メニュー選択 → ⑦ 音設定パネル → ⑧ 豆メモ一覧（BeanCard化） → ⑨ 豆入力フォーム → ⑩ 折りたたみ（入力済みバッジ） → ⑪ レーダーチャート → ⑫ PC 2カラム（メディアクエリのみ） → ⑬ アニメーション。各段階でタイマー・保存が動作することを確認してから次へ。</div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 16px; color: #6B4A36;">G. 変更リスク</div>
+          <div>
+            ・<strong>id / name / data属性 / LocalStorageキー / IndexedDB構造は一切変更しません。</strong><br>
+            ・トグル：main.jsが <span style="font-family: Outfit;">#alert-toggle-label</span> のON/OFF文字を書き換えるため、.toggle-switch の内部構造（input + track + label）は維持が必要。<br>
+            ・折りたたみ：beans.jsが <span style="font-family: Outfit;">details.open</span> を制御している場合、details/summary要素は残しスタイルのみ変更するのが安全。<br>
+            ・select：カスタム矢印はラッパーspan追加で実現（select自体のidは不変）。<br>
+            ・評価：#bean-rating-acidity 等のhidden inputは維持し、RatingScale UIから値を書き込む。<br>
+            ・進捗表示：main.jsのタイマー処理には触れず、工程切替時に現在indexを反映する表示専用関数を1つ追加。<br>
+            ・PC 2カラムはメディアクエリのみで実現し、DOM順は変えない（スマホ表示への影響ゼロ）。
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ 1b スマホ版タイマー ============ -->
+    <div id="1b" data-screen-label="スマホ版タイマー" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #6B4A36; color: #FFFEFA; font-family: Outfit, sans-serif; font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 999px;">1b</span>
+        <span style="font-size: 14px; font-weight: 700; color: #6B4A36;">スマホ版タイマー画面</span>
+      </div>
+      <div style="display: flex; gap: 24px; align-items: flex-start;">
+
+        <!-- 待機中 -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-size: 12px; color: #8C7B6E;">待機中</div>
+          <div data-screen-label="タイマー待機中" style="width: 390px; background: #F6F3EC; border: 1px solid #E0DACD; border-radius: 28px; padding: 20px 16px 24px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+              <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 19px; color: #6B4A36;">Coffee Timer</div>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="music" label="音設定" size="{{ 44 }}" hint-size="44px,44px"></x-import>
+            </div>
+            <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 24px 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 20px;">
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.TimerDisplay" time="01:00" step="蒸らし" status="準備完了" hint-size="100%,180px"></x-import>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ProgressSteps" dc-props="{{ progressWait }}" hint-size="100%,64px"></x-import>
+              <div style="text-align: center; font-size: 13px; color: #8C7B6E;">全4工程 · 合計 03:20</div>
+              <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="pause" label="一時停止" size="{{ 52 }}" hint-size="52px,52px"></x-import>
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="play" label="開始" primary="{{ true }}" size="{{ 72 }}" hint-size="72px,72px"></x-import>
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="stop" label="リセット" size="{{ 52 }}" hint-size="52px,52px"></x-import>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: flex-end;">
+              <div style="flex: 1;">
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Select" dc-props="{{ menuSelect }}" hint-size="100%,68px"></x-import>
+              </div>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="secondary" hint-size="auto,44px">編集</x-import>
+            </div>
+            <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="ghost" full="{{ true }}" hint-size="100%,44px">☕ 豆メモ</x-import>
+          </div>
+        </div>
+
+        <!-- 実行中 -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-size: 12px; color: #8C7B6E;">実行中（メニュー・豆メモは非表示、操作は2つに絞る）</div>
+          <div data-screen-label="タイマー実行中" style="width: 390px; background: #F6F3EC; border: 1px solid #E0DACD; border-radius: 28px; padding: 20px 16px 24px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+              <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 19px; color: #6B4A36;">Coffee Timer</div>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="music" label="音設定" size="{{ 44 }}" hint-size="44px,44px"></x-import>
+            </div>
+            <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 24px 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 20px;">
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.TimerDisplay" time="00:42" step="1投目" status="抽出中" running="{{ true }}" hint-size="100%,180px"></x-import>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ProgressSteps" dc-props="{{ progressRun }}" hint-size="100%,64px"></x-import>
+              <div style="text-align: center; font-size: 13px; color: #8C7B6E;">次：2投目（00:40）</div>
+              <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="pause" label="一時停止" primary="{{ true }}" size="{{ 72 }}" hint-size="72px,72px"></x-import>
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="stop" label="リセット" size="{{ 52 }}" hint-size="52px,52px"></x-import>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ 1c PC版タイマー ============ -->
+    <div id="1c" data-screen-label="PC版タイマー" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #6B4A36; color: #FFFEFA; font-family: Outfit, sans-serif; font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 999px;">1c</span>
+        <span style="font-size: 14px; font-weight: 700; color: #6B4A36;">PC版タイマー画面（最大1020px・2カラム）</span>
+      </div>
+      <div data-screen-label="PC版タイマー" style="width: 1020px; background: #F6F3EC; border: 1px solid #E0DACD; border-radius: 20px; padding: 32px 40px 40px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 24px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 22px; color: #6B4A36;">Coffee Timer</div>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="music" label="音設定" size="{{ 44 }}" hint-size="44px,44px"></x-import>
+        </div>
+        <div style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; align-items: start;">
+          <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 32px 28px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 24px;">
+            <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.TimerDisplay" time="00:42" step="1投目" status="抽出中" running="{{ true }}" hint-size="100%,200px"></x-import>
+            <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ProgressSteps" dc-props="{{ progressRun }}" hint-size="100%,64px"></x-import>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="pause" label="一時停止" primary="{{ true }}" size="{{ 72 }}" hint-size="72px,72px"></x-import>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.ControlButton" icon="stop" label="リセット" size="{{ 52 }}" hint-size="52px,52px"></x-import>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 14px;">
+              <div style="font-size: 15px; font-weight: 700; color: #6B4A36;">工程タイムライン</div>
+              <sc-for list="{{ timeline }}" as="tl" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 8px 4px; border-bottom: 1px solid #EDE8DD;">
+                  <span style="width: 10px; height: 10px; border-radius: 999px; background: {{ tl.dot }}; flex-shrink: 0;"></span>
+                  <span style="flex: 1; font-size: 14px; font-weight: {{ tl.weight }}; color: {{ tl.color }};">{{ tl.name }}</span>
+                  <span style="font-family: Outfit, sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; color: #8C7B6E;">{{ tl.dur }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 12px;">
+              <div style="font-size: 15px; font-weight: 700; color: #6B4A36;">抽出メニュー</div>
+              <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <div style="flex: 1;">
+                  <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Select" dc-props="{{ menuSelectNoLabel }}" hint-size="100%,48px"></x-import>
+                </div>
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="secondary" hint-size="auto,44px">編集</x-import>
+              </div>
+            </div>
+            <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="font-size: 15px; font-weight: 700; color: #6B4A36;">今日の豆</div>
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="text" hint-size="auto,32px">☕ 豆メモ</x-import>
+              </div>
+              <div style="font-size: 14px;">エチオピア イルガチェフェ</div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Tag" tone="wood" hint-size="auto,24px">柑橘</x-import>
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Tag" tone="wood" hint-size="auto,24px">花</x-import>
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Tag" tone="wood" hint-size="auto,24px">紅茶</x-import>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ 1d 豆メモ ============ -->
+    <div id="1d" data-screen-label="豆メモ" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #6B4A36; color: #FFFEFA; font-family: Outfit, sans-serif; font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 999px;">1d</span>
+        <span style="font-size: 14px; font-weight: 700; color: #6B4A36;">豆メモ — 一覧 / 入力フォーム</span>
+      </div>
+      <div style="display: flex; gap: 24px; align-items: flex-start;">
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-size: 12px; color: #8C7B6E;">一覧（下：空の状態）</div>
+          <div data-screen-label="豆メモ一覧" style="width: 390px; background: #F6F3EC; border: 1px solid #E0DACD; border-radius: 28px; padding: 20px 16px 24px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+              <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 18px; color: #6B4A36;">Coffee Bean Memo</div>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="secondary" size="sm" hint-size="auto,36px">新規</x-import>
+            </div>
+            <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.BeanCard" dc-props="{{ bean1 }}" hint-size="100%,150px"></x-import>
+            <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.BeanCard" dc-props="{{ bean2 }}" hint-size="100%,150px"></x-import>
+            <div style="background: #ECE8DF; border-radius: 20px; padding: 28px 20px; text-align: center; display: flex; flex-direction: column; gap: 8px;">
+              <div style="font-size: 14px; color: #8C7B6E;">まだ豆メモがありません</div>
+              <div style="font-size: 12.5px; color: #8C7B6E;">「新規」から最初の豆を記録してください</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-size: 12px; color: #8C7B6E;">入力フォーム（基本情報は常時表示・他は折りたたみ＋入力済み表示）</div>
+          <div data-screen-label="豆入力フォーム" style="width: 390px; background: #F6F3EC; border: 1px solid #E0DACD; border-radius: 28px; padding: 20px 16px 24px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px;">
+              <div style="font-family: Outfit, sans-serif; font-weight: 600; font-size: 18px; color: #6B4A36;">新しい豆メモ</div>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="text" hint-size="auto,32px">新規</x-import>
+            </div>
+            <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 14px;">
+              <div style="font-size: 14px; font-weight: 700; color: #6B4A36;">基本情報</div>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Input" label="豆の名前" value="エチオピア イルガチェフェ" hint-size="100%,68px"></x-import>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Input" label="ロースター / 購入店" value="○○ Coffee" hint-size="100%,68px"></x-import>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Select" dc-props="{{ regionSelect }}" hint-size="100%,68px"></x-import>
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Select" dc-props="{{ countrySelect }}" hint-size="100%,68px"></x-import>
+              </div>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Select" dc-props="{{ processSelect }}" hint-size="100%,68px"></x-import>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Select" dc-props="{{ roastSelect }}" hint-size="100%,68px"></x-import>
+            </div>
+            <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 8px 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06);">
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Collapsible" label="購入・管理情報 — 入力済み 4/4" hint-size="100%,48px"></x-import>
+            </div>
+            <div style="background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="font-size: 14px; font-weight: 700; color: #6B4A36;">味の評価</div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #8C7B6E;">総合評価
+                  <span style="color: #C87958; font-size: 15px;">★★★★</span><span style="color: #E0DACD; font-size: 15px;">★</span>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: center;">
+                <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.RadarChart" dc-props="{{ radar }}" hint-size="220px,220px"></x-import>
+              </div>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.RatingScale" dc-props="{{ rateAcidity }}" hint-size="100%,44px"></x-import>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.RatingScale" dc-props="{{ rateBitter }}" hint-size="100%,44px"></x-import>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.RatingScale" dc-props="{{ rateSweet }}" hint-size="100%,44px"></x-import>
+              <div style="font-size: 12px; color: #8C7B6E; text-align: center;">…コク・香り・後味・飲みやすさ（同形式）</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-size: 13px; color: #8C7B6E;">フレーバーノート</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Tag" tone="wood" hint-size="auto,24px">柑橘</x-import>
+                  <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Tag" tone="wood" hint-size="auto,24px">花</x-import>
+                  <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Tag" tone="wood" hint-size="auto,24px">紅茶</x-import>
+                  <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Tag" tone="empty" hint-size="auto,24px">＋ 追加</x-import>
+                </div>
+              </div>
+            </div>
+            <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="primary" full="{{ true }}" hint-size="100%,48px">保存</x-import>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ 1e 音設定 ============ -->
+    <div id="1e" data-screen-label="音設定" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #6B4A36; color: #FFFEFA; font-family: Outfit, sans-serif; font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 999px;">1e</span>
+        <span style="font-size: 14px; font-weight: 700; color: #6B4A36;">音設定パネル</span>
+      </div>
+      <div data-screen-label="音設定パネル" style="width: 390px; background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 24px 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 16px; font-weight: 700; color: #6B4A36;">音設定</div>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="text" hint-size="auto,32px">閉じる</x-import>
+        </div>
+        <div style="background: #ECE8DF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-size: 13.5px; font-weight: 700; color: #6B4A36;">通知音</div>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Toggle" dc-props="{{ alertToggle }}" hint-size="100%,32px"></x-import>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Select" dc-props="{{ alertSelect }}" hint-size="100%,68px"></x-import>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Slider" dc-props="{{ alertSlider }}" hint-size="100%,48px"></x-import>
+        </div>
+        <div style="background: #ECE8DF; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px;">
+          <div style="font-size: 13.5px; font-weight: 700; color: #6B4A36;">BGM</div>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Toggle" dc-props="{{ bgmToggle }}" hint-size="100%,32px"></x-import>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Select" dc-props="{{ bgmSelect }}" hint-size="100%,68px"></x-import>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Slider" dc-props="{{ bgmSlider }}" hint-size="100%,48px"></x-import>
+        </div>
+        <div style="font-size: 12.5px; color: #7F9684;">♪ Morning Coffee 再生中</div>
+      </div>
+    </div>
+
+    <!-- ============ 1f メニュー編集 ============ -->
+    <div id="1f" data-screen-label="メニュー編集" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="background: #6B4A36; color: #FFFEFA; font-family: Outfit, sans-serif; font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 999px;">1f</span>
+        <span style="font-size: 14px; font-weight: 700; color: #6B4A36;">メニュー編集</span>
+      </div>
+      <div data-screen-label="メニュー編集" style="width: 390px; background: #FFFEFA; border: 1px solid #E0DACD; border-radius: 20px; padding: 24px 20px; box-shadow: 0 2px 10px rgba(63,48,40,0.06); display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-size: 16px; font-weight: 700; color: #6B4A36;">メニュー編集</div>
+          <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="text" hint-size="auto,32px">新規メニュー</x-import>
+        </div>
+        <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Input" label="メニュー名" value="メニュー1" hint-size="100%,68px"></x-import>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <sc-for list="{{ editSteps }}" as="st" hint-placeholder-count="3">
+            <div style="display: flex; gap: 10px; align-items: center; background: #ECE8DF; border-radius: 14px; padding: 10px 12px;">
+              <span style="font-family: Outfit, sans-serif; font-size: 13px; color: #8C7B6E; width: 20px; text-align: center;">{{ st.n }}</span>
+              <span style="flex: 1; font-size: 14px;">{{ st.name }}</span>
+              <span style="font-family: Outfit, sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; color: #6B4A36;">{{ st.sec }}秒</span>
+              <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="danger" size="sm" hint-size="auto,32px">削除</x-import>
+            </div>
+          </sc-for>
+        </div>
+        <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="ghost" full="{{ true }}" hint-size="100%,44px">＋ 工程を追加</x-import>
+        <x-import component-from-global-scope="CoffeeTimerDesignSystem_603cce.Button" variant="primary" full="{{ true }}" hint-size="100%,48px">記録</x-import>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const noop = () => {};
+    const steps = ["蒸らし", "1投目", "2投目", "3投目"];
+    return {
+      progressWait: { steps, current: 0, percent: 0 },
+      progressRun: { steps, current: 1, percent: 42 },
+      timeline: [
+        { name: "蒸らし", dur: "01:00", dot: "#7F9684", color: "#8C7B6E", weight: 500 },
+        { name: "1投目", dur: "01:00", dot: "#6B4A36", color: "#3F3028", weight: 700 },
+        { name: "2投目", dur: "00:40", dot: "#CFC6B5", color: "#8C7B6E", weight: 500 },
+        { name: "3投目", dur: "00:40", dot: "#CFC6B5", color: "#8C7B6E", weight: 500 }
+      ],
+      menuSelect: { label: "抽出メニュー", options: ["メニュー1", "メニュー2"], value: "メニュー1", onChange: noop },
+      menuSelectNoLabel: { options: ["メニュー1", "メニュー2"], value: "メニュー1", onChange: noop },
+      regionSelect: { label: "地域", options: ["アフリカ", "中南米", "アジア"], value: "アフリカ", onChange: noop },
+      countrySelect: { label: "国", options: ["エチオピア", "ケニア", "その他"], value: "エチオピア", onChange: noop },
+      processSelect: { label: "精製方法", options: ["ウォッシュド", "ナチュラル", "ハニー", "アナエロビック", "その他"], value: "ウォッシュド", onChange: noop },
+      roastSelect: { label: "焙煎度", options: ["浅煎り", "中浅煎り", "中煎り", "中深煎り", "深煎り"], value: "中浅煎り", onChange: noop },
+      bean1: {
+        name: "エチオピア イルガチェフェ", roaster: "○○ Coffee",
+        meta: "エチオピア · ウォッシュド · 中浅煎り", overall: 4, favorite: true,
+        flavors: ["柑橘", "花", "紅茶"], onEdit: noop, onDelete: noop, onToggleFavorite: noop
+      },
+      bean2: {
+        name: "ブラジル No.2", roaster: "自家焙煎△△",
+        meta: "ブラジル · ナチュラル · 中深煎り", overall: 3, favorite: false,
+        flavors: ["チョコレート", "ナッツ"], onEdit: noop, onDelete: noop, onToggleFavorite: noop
+      },
+      radar: { values: [4, 2, 4, 3, 5, 4, 4], size: 210 },
+      rateAcidity: { label: "酸味", value: 4, onChange: noop },
+      rateBitter: { label: "苦味", value: 2, onChange: noop },
+      rateSweet: { label: "甘み", value: 4, onChange: noop },
+      alertToggle: { label: "通知音", checked: true, onChange: noop },
+      bgmToggle: { label: "BGM", checked: true, onChange: noop },
+      alertSelect: { label: "種類", options: ["Bell", "Wood", "Soft"], value: "Bell", onChange: noop },
+      bgmSelect: { label: "曲選択", options: ["None", "Morning Coffee", "Cafe Jazz", "Rain", "Lo-Fi"], value: "Morning Coffee", onChange: noop },
+      alertSlider: { label: "音量", value: 91, min: 0, max: 100, onChange: noop },
+      bgmSlider: { label: "音量", value: 59, min: 0, max: 100, onChange: noop },
+      editSteps: [
+        { n: 1, name: "蒸らし", sec: 60 },
+        { n: 2, name: "1投目", sec: 60 },
+        { n: 3, name: "2投目", sec: 40 },
+        { n: 4, name: "3投目", sec: 40 }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

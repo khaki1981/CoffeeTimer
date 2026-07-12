@@ -1,0 +1,24 @@
+:root {
+  /* ===== Corner radius ===== */
+  --radius-xs: 6px;    /* tags inside dense rows */
+  --radius-sm: 10px;   /* inputs, small buttons */
+  --radius-md: 14px;   /* buttons, collapsibles */
+  --radius-lg: 20px;   /* cards, panels */
+  --radius-pill: 999px;/* chips, toggles, round controls */
+
+  /* ===== Borders ===== */
+  --border-hairline: 1px solid var(--border-line);
+  --border-input: 1.5px solid var(--border-strong);
+  --border-accent: 1.5px solid var(--wood-600);
+
+  /* ===== Shadows — soft, warm, low ===== */
+  --shadow-card: 0 1px 2px rgba(63, 48, 40, 0.05), 0 4px 14px rgba(63, 48, 40, 0.06);
+  --shadow-raised: 0 2px 4px rgba(63, 48, 40, 0.08), 0 8px 24px rgba(63, 48, 40, 0.10);
+  --shadow-button: 0 1px 2px rgba(63, 48, 40, 0.12);
+  --shadow-inset-well: inset 0 1px 3px rgba(63, 48, 40, 0.06);
+
+  /* ===== Motion ===== */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --dur-fast: 120ms; /* @kind other */
+  --dur-med: 220ms; /* @kind other */
+}
