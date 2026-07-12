@@ -11,12 +11,21 @@ const soundSettingsClose = document.getElementById("sound-settings-close");
 const soundSettingsCloseBottom = document.getElementById("sound-settings-close-bottom");
 const editButton = document.getElementById("edit-button");
 const editor = document.getElementById("step-editor");
-const newMenuButton = document.getElementById("new-menu-button");
+const menuActions = document.getElementById("menu-actions");
+const menuActionsButton = document.getElementById("menu-actions-button");
+const menuActionsPopover = document.getElementById("menu-actions-popover");
+const deleteMenuButton = document.getElementById("delete-menu-button");
+const deleteMenuHelp = document.getElementById("delete-menu-help");
+const deleteMenuDialog = document.getElementById("delete-menu-dialog");
+const deleteMenuDescription = document.getElementById("delete-menu-description");
+const cancelDeleteMenuButton = document.getElementById("cancel-delete-menu-button");
+const confirmDeleteMenuButton = document.getElementById("confirm-delete-menu-button");
 const menuNameInput = document.getElementById("menu-name");
 const stepList = document.getElementById("step-list");
 const addStepButton = document.getElementById("add-step-button");
 const saveMenuButton = document.getElementById("save-menu-button");
 const editorMessage = document.getElementById("editor-message");
+const saveToast = document.getElementById("save-toast");
 const alertEnabledInput = document.getElementById("alert-enabled");
 const alertSoundSelect = document.getElementById("alert-sound");
 const alertVolumeInput = document.getElementById("alert-volume");
@@ -38,6 +47,7 @@ const BGM_ENABLED_STORAGE_KEY = "coffee-timer-bgm-enabled";
 const BGM_TRACK_STORAGE_KEY = "coffee-timer-bgm-track";
 const BGM_VOLUME_STORAGE_KEY = "coffee-timer-bgm-volume";
 const MAX_MINUTES = 99;
+const NEW_MENU_VALUE = "new";
 const ALERT_SOUND_KEYS = ["bell", "wood", "soft"];
 const BGM_TRACKS = {
   none: null,
@@ -66,6 +76,7 @@ const DEFAULT_MENUS = [
 
 let menus = [];
 let selectedMenuIndex = 0;
+let previousSelectedMenuIndex = null;
 let currentStepIndex = 0;
 let remainingSeconds = 60;
 let timerId = null;
@@ -86,6 +97,8 @@ let bgmFadeTimer = null;
 // 編集内容は「記録」を押すまで保存データと分けて管理します。
 let draftMenu = null;
 let editingMenuIndex = 0;
+let menuIndexBeforeCreate = null;
+let saveToastTimer = null;
 
 function cloneMenu(menu) {
   return {
@@ -306,6 +319,10 @@ function renderMenuSelect() {
     option.textContent = menu.name;
     menuSelect.append(option);
   });
+  const newMenuOption = document.createElement("option");
+  newMenuOption.value = NEW_MENU_VALUE;
+  newMenuOption.textContent = "＋ 新規メニューを追加";
+  menuSelect.append(newMenuOption);
   menuSelect.value = String(selectedMenuIndex);
 }
 
@@ -360,9 +377,69 @@ function renderDraft() {
 
 function openEditorForMenu(index) {
   editingMenuIndex = index;
+  menuIndexBeforeCreate = null;
   draftMenu = cloneMenu(menus[index]);
   editorMessage.textContent = "";
   renderDraft();
+  updateMenuActionsAvailability();
+}
+
+function startNewMenu() {
+  menuIndexBeforeCreate = selectedMenuIndex;
+  editingMenuIndex = null;
+  draftMenu = {
+    name: "",
+    steps: [{ name: "蒸らし", minutes: 0, seconds: 30 }]
+  };
+  editorMessage.textContent = "新しいメニューを編集中です";
+  renderDraft();
+  closeMenuActions();
+  updateMenuActionsAvailability();
+  setEditorOpen(true);
+  menuNameInput.focus();
+}
+
+function setEditorOpen(isOpen) {
+  if (!isOpen) closeMenuActions();
+  editor.hidden = !isOpen;
+  editButton.setAttribute("aria-expanded", String(isOpen));
+  editButton.textContent = isOpen ? "閉じる" : "編集";
+}
+
+function updateMenuActionsAvailability() {
+  const isSavedMenu = editingMenuIndex !== null;
+  menuActions.hidden = !isSavedMenu;
+  deleteMenuButton.disabled = menus.length <= 1;
+  deleteMenuHelp.hidden = menus.length > 1;
+}
+
+function setMenuActionsOpen(isOpen) {
+  menuActionsPopover.hidden = !isOpen;
+  menuActionsButton.setAttribute("aria-expanded", String(isOpen));
+}
+
+function closeMenuActions() {
+  setMenuActionsOpen(false);
+}
+
+function closeEditor() {
+  if (editingMenuIndex === null && menuIndexBeforeCreate !== null) {
+    selectedMenuIndex = menuIndexBeforeCreate;
+    renderMenuSelect();
+  }
+  openEditorForMenu(selectedMenuIndex);
+  setEditorOpen(false);
+}
+
+function showToast(message) {
+  if (saveToastTimer !== null) window.clearTimeout(saveToastTimer);
+  saveToast.textContent = message;
+  saveToast.classList.add("is-visible");
+  saveToastTimer = window.setTimeout(() => {
+    saveToast.classList.remove("is-visible");
+    saveToast.textContent = "";
+    saveToastTimer = null;
+  }, 2500);
 }
 
 function prepareAudio() {
@@ -638,6 +715,11 @@ function pauseTimer() {
 }
 
 menuSelect.addEventListener("change", () => {
+  if (menuSelect.value === NEW_MENU_VALUE) {
+    startNewMenu();
+    return;
+  }
+  previousSelectedMenuIndex = selectedMenuIndex;
   selectedMenuIndex = Number(menuSelect.value);
   resetToFirstStep();
   openEditorForMenu(selectedMenuIndex);
@@ -712,22 +794,91 @@ bgmTrackSelect.addEventListener("change", () => {
 
 editButton.addEventListener("click", () => {
   const willOpen = editor.hidden;
-  editor.hidden = !willOpen;
-  editButton.setAttribute("aria-expanded", String(willOpen));
-  editButton.textContent = willOpen ? "閉じる" : "編集";
-  if (willOpen) openEditorForMenu(selectedMenuIndex);
+  if (willOpen) {
+    openEditorForMenu(selectedMenuIndex);
+    setEditorOpen(true);
+  } else {
+    closeEditor();
+  }
 });
 
-newMenuButton.addEventListener("click", () => {
-  editingMenuIndex = null;
-  draftMenu = {
-    name: `メニュー${menus.length + 1}`,
-    steps: [{ name: "蒸らし", minutes: 0, seconds: 30 }]
-  };
-  editorMessage.textContent = "新しいメニューを編集中です";
-  renderDraft();
-  menuNameInput.focus();
-  menuNameInput.select();
+menuActionsButton.addEventListener("click", () => {
+  const willOpen = menuActionsPopover.hidden;
+  setMenuActionsOpen(willOpen);
+  if (willOpen && !deleteMenuButton.disabled) deleteMenuButton.focus();
+});
+
+document.addEventListener("click", (event) => {
+  if (!menuActions.contains(event.target)) closeMenuActions();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (!deleteMenuDialog.hidden) {
+    closeDeleteDialog();
+  } else if (!menuActionsPopover.hidden) {
+    closeMenuActions();
+    menuActionsButton.focus();
+  }
+});
+
+deleteMenuButton.addEventListener("click", () => {
+  if (editingMenuIndex === null || menus.length <= 1 || !menus[editingMenuIndex]) return;
+  deleteMenuDescription.textContent = `「${menus[editingMenuIndex].name}」を削除します。この操作は元に戻せません。`;
+  closeMenuActions();
+  deleteMenuDialog.hidden = false;
+  cancelDeleteMenuButton.focus();
+});
+
+function closeDeleteDialog(restoreFocus = true) {
+  deleteMenuDialog.hidden = true;
+  if (restoreFocus && !menuActions.hidden) menuActionsButton.focus();
+}
+
+cancelDeleteMenuButton.addEventListener("click", () => closeDeleteDialog());
+
+deleteMenuDialog.addEventListener("click", (event) => {
+  if (event.target === deleteMenuDialog) closeDeleteDialog();
+});
+
+deleteMenuDialog.addEventListener("keydown", (event) => {
+  if (event.key !== "Tab") return;
+  const firstButton = cancelDeleteMenuButton;
+  const lastButton = confirmDeleteMenuButton;
+  if (event.shiftKey && document.activeElement === firstButton) {
+    event.preventDefault();
+    lastButton.focus();
+  } else if (!event.shiftKey && document.activeElement === lastButton) {
+    event.preventDefault();
+    firstButton.focus();
+  }
+});
+
+confirmDeleteMenuButton.addEventListener("click", () => {
+  const deleteIndex = editingMenuIndex;
+  if (deleteIndex === null || menus.length <= 1 || !menus[deleteIndex]) return;
+
+  menus.splice(deleteIndex, 1);
+  if (
+    previousSelectedMenuIndex !== null &&
+    previousSelectedMenuIndex !== deleteIndex &&
+    previousSelectedMenuIndex >= 0 &&
+    previousSelectedMenuIndex <= menus.length
+  ) {
+    selectedMenuIndex = previousSelectedMenuIndex > deleteIndex
+      ? previousSelectedMenuIndex - 1
+      : previousSelectedMenuIndex;
+  } else {
+    selectedMenuIndex = 0;
+  }
+  previousSelectedMenuIndex = null;
+  closeDeleteDialog(false);
+  renderMenuSelect();
+  resetToFirstStep();
+  saveMenus();
+  openEditorForMenu(selectedMenuIndex);
+  setEditorOpen(false);
+  showToast("メニューを削除しました");
 });
 
 menuNameInput.addEventListener("input", () => {
@@ -793,7 +944,8 @@ saveMenuButton.addEventListener("click", () => {
   resetToFirstStep();
   saveMenus();
   openEditorForMenu(selectedMenuIndex);
-  editorMessage.textContent = "記録しました";
+  setEditorOpen(false);
+  showToast("メニューを保存しました");
 });
 
 menus = loadMenus();

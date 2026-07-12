@@ -163,7 +163,27 @@
     <section id="step-editor" class="step-editor" aria-labelledby="editor-title" hidden>
       <div class="editor-heading">
         <h2 id="editor-title">メニュー編集</h2>
-        <button id="new-menu-button" class="text-button" type="button">新規メニュー</button>
+        <div id="menu-actions" class="menu-actions">
+          <button
+            id="menu-actions-button"
+            class="menu-actions-button"
+            type="button"
+            aria-label="メニュー操作"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="menu-actions-popover"
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="5" cy="12" r="1"></circle>
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="19" cy="12" r="1"></circle>
+            </svg>
+          </button>
+          <div id="menu-actions-popover" class="menu-actions-popover" role="menu" hidden>
+            <button id="delete-menu-button" type="button" role="menuitem">このメニューを削除</button>
+            <p id="delete-menu-help" hidden>最後のメニューは削除できません</p>
+          </div>
+        </div>
       </div>
 
       <label class="menu-name-field">
@@ -177,6 +197,17 @@
       <button id="save-menu-button" class="save-button" type="button">記録</button>
       <p id="editor-message" class="editor-message" aria-live="polite"></p>
     </section>
+
+    <div id="delete-menu-dialog" class="delete-dialog-backdrop" role="dialog" aria-modal="true" aria-labelledby="delete-menu-title" aria-describedby="delete-menu-description" hidden>
+      <div class="delete-dialog-panel">
+        <h2 id="delete-menu-title">メニューを削除しますか？</h2>
+        <p id="delete-menu-description"></p>
+        <div class="delete-dialog-actions">
+          <button id="cancel-delete-menu-button" class="dialog-cancel-button" type="button">キャンセル</button>
+          <button id="confirm-delete-menu-button" class="dialog-delete-button" type="button">削除する</button>
+        </div>
+      </div>
+    </div>
 
     <section id="bean-memo-panel" class="bean-memo-panel" aria-labelledby="bean-memo-title" hidden>
       <div class="bean-memo-heading">
@@ -325,6 +356,8 @@
     </section>
     </div>
   </main>
+
+  <div id="save-toast" class="save-toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script src="js/db.js"></script>
   <script src="main.js"></script>
