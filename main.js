@@ -261,6 +261,18 @@ function renderSoundSettings() {
   bgmVolumeInput.value = String(bgmVolume);
   bgmVolumeValue.value = String(bgmVolume);
   bgmToggleLabel.textContent = bgmEnabled ? "ON" : "OFF";
+  updateSoundControlAvailability();
+}
+
+function updateSoundControlAvailability() {
+  alertSoundSelect.disabled = !alertEnabled;
+  alertVolumeInput.disabled = !alertEnabled;
+  bgmTrackSelect.disabled = !bgmEnabled;
+  bgmVolumeInput.disabled = !bgmEnabled;
+}
+
+function getSelectedBgmTrackLabel() {
+  return bgmTrackSelect.selectedOptions[0]?.textContent ?? "BGM";
 }
 
 function setSoundSettingsOpen(isOpen) {
@@ -527,7 +539,7 @@ function playBgm() {
   if (playPromise !== undefined) {
     playPromise
       .then(() => {
-        if (bgmAudio === audio) bgmStatus.textContent = "";
+        if (bgmAudio === audio) bgmStatus.textContent = `${getSelectedBgmTrackLabel()} 再生中`;
       })
       .catch(() => {
         if (bgmAudio === audio) bgmStatus.textContent = "BGMファイルが見つかりません";
@@ -538,14 +550,19 @@ function playBgm() {
 function pauseBgm() {
   clearBgmFade();
   if (bgmAudio !== null) bgmAudio.pause();
+  bgmStatus.textContent = "";
 }
 
 function stopBgm() {
   clearBgmFade();
-  if (bgmAudio === null) return;
+  if (bgmAudio === null) {
+    bgmStatus.textContent = "";
+    return;
+  }
   bgmAudio.pause();
   if (bgmAudio.readyState > 0) bgmAudio.currentTime = 0;
   updateBgmOutputVolume();
+  bgmStatus.textContent = "";
 }
 
 function fadeOutBgm() {
@@ -641,6 +658,7 @@ soundSettingsCloseBottom.addEventListener("click", () => setSoundSettingsOpen(fa
 alertEnabledInput.addEventListener("change", () => {
   alertEnabled = alertEnabledInput.checked;
   alertToggleLabel.textContent = alertEnabled ? "ON" : "OFF";
+  updateSoundControlAvailability();
   saveSoundSettings();
 });
 
@@ -664,6 +682,7 @@ bgmEnabledInput.addEventListener("change", () => {
   bgmEnabled = bgmEnabledInput.checked;
   bgmToggleLabel.textContent = bgmEnabled ? "ON" : "OFF";
   bgmStatus.textContent = "";
+  updateSoundControlAvailability();
   saveSoundSettings();
   if (bgmEnabled && timerId !== null) {
     playBgm();
