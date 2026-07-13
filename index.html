@@ -191,6 +191,38 @@
         <input id="menu-name" type="text" maxlength="30" required />
       </label>
 
+      <section id="water-guide-editor" class="water-guide-editor" aria-labelledby="water-guide-title">
+        <div class="water-guide-heading">
+          <h3 id="water-guide-title">湯量ガイド</h3>
+          <p id="water-guide-summary" class="water-guide-summary">使わない</p>
+        </div>
+        <p class="water-guide-help">豆とお湯の量を設定し、各工程の注湯量を確認できます。</p>
+        <div class="water-mode-options" role="radiogroup" aria-label="湯量の決め方">
+          <label class="water-mode-card">
+            <input type="radio" name="water-guide-mode" value="servings" />
+            <span>人数から</span>
+            <small>人数×1人分</small>
+          </label>
+          <label class="water-mode-card">
+            <input type="radio" name="water-guide-mode" value="ratio" />
+            <span>比率から</span>
+            <small>豆量×比率</small>
+          </label>
+          <label class="water-mode-card">
+            <input type="radio" name="water-guide-mode" value="direct" />
+            <span>豆量と湯量</span>
+            <small>直接指定</small>
+          </label>
+          <label class="water-mode-card">
+            <input type="radio" name="water-guide-mode" value="none" />
+            <span>使わない</span>
+            <small>時間だけ設定</small>
+          </label>
+        </div>
+        <div id="water-guide-fields" class="water-guide-fields"></div>
+        <p id="water-guide-message" class="water-guide-message" aria-live="polite"></p>
+      </section>
+
       <div id="step-list" class="step-list"></div>
 
       <button id="add-step-button" class="add-step-button" type="button" aria-label="工程を追加">＋</button>
