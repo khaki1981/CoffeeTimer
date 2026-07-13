@@ -56,6 +56,19 @@ const BGM_TRACKS = {
   rain: "assets/music/rain.mp3",
   lofi: "assets/music/lofi.mp3"
 };
+const AVAILABLE_BGM_TRACK_KEYS = ["none", "morning-coffee"];
+const BGM_DEBUG_EVENTS = [
+  "play",
+  "playing",
+  "pause",
+  "ended",
+  "waiting",
+  "stalled",
+  "abort",
+  "error",
+  "loadedmetadata",
+  "canplay"
+];
 const OLD_DEFAULT_ALERT_VOLUME = 70;
 const OLD_DEFAULT_BGM_VOLUME = 45;
 const DEFAULT_ALERT_VOLUME = 91;
@@ -93,6 +106,8 @@ let bgmSourceNode = null;
 let bgmGainNode = null;
 let bgmFadeLevel = 1;
 let bgmFadeTimer = null;
+let bgmPlayToken = 0;
+let bgmDesiredPlaying = false;
 
 // 編集内容は「記録」を押すまで保存データと分けて管理します。
 let draftMenu = null;
@@ -213,6 +228,10 @@ function normalizeStoredBoolean(value, fallback) {
   return fallback;
 }
 
+function isAvailableBgmTrack(trackKey) {
+  return AVAILABLE_BGM_TRACK_KEYS.includes(trackKey);
+}
+
 function loadSoundSettings() {
   try {
     const savedAlertEnabled = localStorage.getItem(ALERT_ENABLED_STORAGE_KEY);
@@ -233,7 +252,7 @@ function loadSoundSettings() {
       DEFAULT_ALERT_VOLUME
     );
     bgmEnabled = normalizeStoredBoolean(savedBgmEnabled, false);
-    selectedBgmTrack = Object.hasOwn(BGM_TRACKS, savedBgmTrack) ? savedBgmTrack : "morning-coffee";
+    selectedBgmTrack = isAvailableBgmTrack(savedBgmTrack) ? savedBgmTrack : "morning-coffee";
     bgmVolume = normalizeVolumeWithDefaultMigration(
       savedBgmVolume,
       OLD_DEFAULT_BGM_VOLUME,
@@ -448,7 +467,9 @@ function prepareAudio() {
     if (!AudioContext) return null;
     if (audioContext === null || audioContext.state === "closed") audioContext = new AudioContext();
     if (audioContext.state === "suspended") {
-      audioContext.resume().catch(() => {});
+      audioContext.resume().catch((error) => {
+        console.warn("AudioContext resume failed", error);
+      });
     }
     return audioContext;
   } catch (error) {
@@ -576,7 +597,57 @@ function updateBgmOutputVolume() {
   bgmAudio.volume = Math.min(1, volume);
 }
 
+async function resumeAudioContextForBgm(context) {
+  if (!context || context.state !== "suspended" || typeof context.resume !== "function") return;
+
+  try {
+    await context.resume();
+  } catch (error) {
+    console.warn("BGM AudioContext resume failed", error);
+  }
+}
+
+function registerBgmAudioDebugEvents(audio) {
+  BGM_DEBUG_EVENTS.forEach((eventName) => {
+    audio.addEventListener(eventName, () => {
+      console.log("BGM audio event", eventName, {
+        readyState: audio.readyState,
+        networkState: audio.networkState,
+        currentTime: audio.currentTime,
+        duration: audio.duration,
+        paused: audio.paused,
+        loop: audio.loop
+      });
+    });
+  });
+}
+
+function logBgmPlayRejected(error, audio) {
+  console.error(
+    "BGM play rejected",
+    error.name,
+    error.message,
+    {
+      readyState: audio.readyState,
+      networkState: audio.networkState,
+      currentTime: audio.currentTime,
+      duration: audio.duration,
+      audioContextState: audioContext?.state
+    }
+  );
+}
+
+function getBgmPlayErrorMessage(error) {
+  if (error.name === "NotAllowedError") return "BGM playback was blocked";
+  if (error.name === "AbortError") return "";
+  if (error.name === "NotSupportedError") return "BGM file is not supported";
+  return "BGM playback failed";
+}
+
 function loadBgmTrack(trackKey) {
+  console.log("BGM load", trackKey);
+  bgmDesiredPlaying = false;
+  bgmPlayToken += 1;
   clearBgmFade();
   disconnectBgmAudioGraph();
   if (bgmAudio !== null) {
@@ -595,54 +666,91 @@ function loadBgmTrack(trackKey) {
   audio.preload = "none";
   audio.volume = getDirectAudioVolume(bgmVolume);
   audio.src = filePath;
+  registerBgmAudioDebugEvents(audio);
   audio.addEventListener("error", () => {
     if (bgmAudio === audio) {
-      bgmStatus.textContent = "BGMファイルが見つかりません";
+      bgmStatus.textContent = "BGM file was not found";
     }
   });
   bgmAudio = audio;
   return bgmAudio;
 }
 
-function playBgm() {
-  if (!bgmEnabled || selectedBgmTrack === "none") return;
+async function playBgm() {
+  if (!bgmEnabled || selectedBgmTrack === "none") {
+    bgmDesiredPlaying = false;
+    bgmPlayToken += 1;
+    return;
+  }
+
+  console.log("BGM play requested");
   clearBgmFade();
   const audio = bgmAudio ?? loadBgmTrack(selectedBgmTrack);
   if (!audio) return;
 
-  connectBgmAudioGraph(audio);
+  bgmDesiredPlaying = true;
+  const playToken = bgmPlayToken + 1;
+  bgmPlayToken = playToken;
+  audio.loop = true;
+
+  const graphContext = connectBgmAudioGraph(audio) ? audioContext : prepareAudio();
+  await resumeAudioContextForBgm(graphContext);
+  if (bgmPlayToken !== playToken || !bgmDesiredPlaying || bgmAudio !== audio) return;
+
   updateBgmOutputVolume();
-  const playPromise = audio.play();
-  if (playPromise !== undefined) {
-    playPromise
-      .then(() => {
-        if (bgmAudio === audio) bgmStatus.textContent = `${getSelectedBgmTrackLabel()} 再生中`;
-      })
-      .catch(() => {
-        if (bgmAudio === audio) bgmStatus.textContent = "BGMファイルが見つかりません";
-      });
+  try {
+    await audio.play();
+    console.log("BGM play resolved");
+    if (bgmPlayToken === playToken && bgmDesiredPlaying && bgmAudio === audio) {
+      bgmStatus.textContent = `${getSelectedBgmTrackLabel()} 蜀咲函荳ｭ`;
+    }
+  } catch (error) {
+    logBgmPlayRejected(error, audio);
+    if (bgmPlayToken === playToken && bgmAudio === audio) {
+      const message = getBgmPlayErrorMessage(error);
+      if (message) bgmStatus.textContent = message;
+    }
   }
 }
 
 function pauseBgm() {
+  bgmDesiredPlaying = false;
+  bgmPlayToken += 1;
   clearBgmFade();
-  if (bgmAudio !== null) bgmAudio.pause();
+  if (bgmAudio !== null) {
+    bgmAudio.pause();
+    console.log("BGM paused", bgmAudio.currentTime);
+  }
   bgmStatus.textContent = "";
 }
 
 function stopBgm() {
+  bgmDesiredPlaying = false;
+  bgmPlayToken += 1;
   clearBgmFade();
   if (bgmAudio === null) {
     bgmStatus.textContent = "";
     return;
   }
   bgmAudio.pause();
-  if (bgmAudio.readyState > 0) bgmAudio.currentTime = 0;
+  try {
+    bgmAudio.currentTime = 0;
+  } catch (error) {
+    console.warn("BGM currentTime reset failed", error);
+  }
+  bgmAudio.loop = true;
   updateBgmOutputVolume();
+  console.log("BGM stopped", {
+    paused: bgmAudio.paused,
+    currentTime: bgmAudio.currentTime,
+    loop: bgmAudio.loop
+  });
   bgmStatus.textContent = "";
 }
 
 function fadeOutBgm() {
+  bgmDesiredPlaying = false;
+  bgmPlayToken += 1;
   clearBgmFade();
   if (bgmAudio === null || bgmAudio.paused) {
     stopBgm();
@@ -650,9 +758,15 @@ function fadeOutBgm() {
   }
 
   const audio = bgmAudio;
+  audio.loop = false;
+  console.log("BGM fade started", audio.currentTime, audio.duration);
   const steps = 15;
   let currentStep = 0;
   bgmFadeTimer = window.setInterval(() => {
+    if (bgmAudio !== audio) {
+      clearBgmFade();
+      return;
+    }
     currentStep += 1;
     bgmFadeLevel = Math.max(0, 1 - currentStep / steps);
     updateBgmOutputVolume();
@@ -784,9 +898,10 @@ bgmVolumeInput.addEventListener("input", handleBgmVolumeChange);
 bgmVolumeInput.addEventListener("change", handleBgmVolumeChange);
 
 bgmTrackSelect.addEventListener("change", () => {
-  selectedBgmTrack = Object.hasOwn(BGM_TRACKS, bgmTrackSelect.value)
+  selectedBgmTrack = isAvailableBgmTrack(bgmTrackSelect.value)
     ? bgmTrackSelect.value
     : "morning-coffee";
+  bgmTrackSelect.value = selectedBgmTrack;
   loadBgmTrack(selectedBgmTrack);
   saveSoundSettings();
   if (bgmEnabled && timerId !== null) playBgm();
