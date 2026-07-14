@@ -10,6 +10,17 @@ const soundSettings = document.getElementById("sound-settings");
 const soundSettingsClose = document.getElementById("sound-settings-close");
 const soundSettingsCloseBottom = document.getElementById("sound-settings-close-bottom");
 const editButton = document.getElementById("edit-button");
+const quickWaterGuideToggle = document.getElementById("quick-water-guide-toggle");
+const quickWaterGuideDetails = document.getElementById("quick-water-guide-details");
+const quickWaterServingsSelect = document.getElementById("quick-water-servings");
+const quickWaterCoffee = document.getElementById("quick-water-coffee");
+const quickWaterTotal = document.getElementById("quick-water-total");
+const quickWaterDetailsButton = document.getElementById("quick-water-details-button");
+const quickWaterDetails = document.getElementById("quick-water-details");
+const quickWaterBeansInput = document.getElementById("quick-water-beans-per-serving");
+const quickWaterWaterInput = document.getElementById("quick-water-water-per-serving");
+const quickWaterMessage = document.getElementById("quick-water-message");
+const quickWaterCreateMenuButton = document.getElementById("quick-water-create-menu");
 const editor = document.getElementById("step-editor");
 const menuActions = document.getElementById("menu-actions");
 const menuActionsButton = document.getElementById("menu-actions-button");
@@ -44,6 +55,7 @@ const bgmStatus = document.getElementById("bgm-status");
 
 const MENUS_STORAGE_KEY = "coffee-timer-menus";
 const SELECTED_MENU_STORAGE_KEY = "coffee-timer-selected-menu";
+const QUICK_WATER_GUIDE_STORAGE_KEY = "coffee-timer-quick-water-guide";
 const ALERT_ENABLED_STORAGE_KEY = "coffee-timer-alert-enabled";
 const ALERT_SOUND_STORAGE_KEY = "coffee-timer-alert-sound";
 const ALERT_VOLUME_STORAGE_KEY = "coffee-timer-alert-volume";
@@ -90,6 +102,11 @@ const DEFAULT_WATER_GUIDE = {
   brewRatio: 16.7,
   displayMode: "both"
 };
+const DEFAULT_QUICK_WATER_GUIDE = {
+  servings: 1,
+  beansPerServingGrams: 12,
+  waterPerServingGrams: 200
+};
 
 const DEFAULT_MENUS = [
   {
@@ -118,6 +135,7 @@ let alertVolume = DEFAULT_ALERT_VOLUME;
 let bgmEnabled = false;
 let selectedBgmTrack = "morning-coffee";
 let bgmVolume = DEFAULT_BGM_VOLUME;
+let quickWaterGuide = { ...DEFAULT_QUICK_WATER_GUIDE };
 let bgmAudio = null;
 let bgmSourceNode = null;
 let bgmGainNode = null;
@@ -172,6 +190,52 @@ function normalizeWaterGuide(waterGuide) {
     brewRatio: normalizePositiveNumber(source.brewRatio, DEFAULT_WATER_GUIDE.brewRatio),
     displayMode
   };
+}
+
+function normalizeQuickWaterGuide(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return {
+    servings: Math.min(10, Math.max(1, Math.round(normalizeMinimumNumber(
+      source.servings,
+      DEFAULT_QUICK_WATER_GUIDE.servings,
+      1
+    )))),
+    beansPerServingGrams: normalizePositiveNumber(
+      source.beansPerServingGrams,
+      DEFAULT_QUICK_WATER_GUIDE.beansPerServingGrams
+    ),
+    waterPerServingGrams: normalizePositiveNumber(
+      source.waterPerServingGrams,
+      DEFAULT_QUICK_WATER_GUIDE.waterPerServingGrams
+    )
+  };
+}
+
+function calculateQuickWaterGuide(guide) {
+  const normalized = normalizeQuickWaterGuide(guide);
+  const coffeeGrams = Math.round(normalized.servings * normalized.beansPerServingGrams);
+  const totalWaterGrams = Math.round(normalized.servings * normalized.waterPerServingGrams);
+  const brewRatio = Math.round((normalized.waterPerServingGrams / normalized.beansPerServingGrams) * 10) / 10;
+  return {
+    ...normalized,
+    coffeeGrams,
+    totalWaterGrams,
+    brewRatio
+  };
+}
+
+function createWaterGuideFromQuickGuide(guide) {
+  const calculated = calculateQuickWaterGuide(guide);
+  return normalizeWaterGuide({
+    mode: "servings",
+    servings: calculated.servings,
+    beansPerServingGrams: calculated.beansPerServingGrams,
+    waterPerServingGrams: calculated.waterPerServingGrams,
+    coffeeGrams: calculated.coffeeGrams,
+    totalWaterGrams: calculated.totalWaterGrams,
+    brewRatio: calculated.brewRatio,
+    displayMode: DEFAULT_WATER_GUIDE.displayMode
+  });
 }
 
 function cloneMenu(menu) {
@@ -280,6 +344,24 @@ function saveMenus() {
     localStorage.setItem(SELECTED_MENU_STORAGE_KEY, String(selectedMenuIndex));
   } catch (error) {
     console.warn("メニューデータを保存できませんでした。", error);
+  }
+}
+
+function loadQuickWaterGuide() {
+  try {
+    const saved = localStorage.getItem(QUICK_WATER_GUIDE_STORAGE_KEY);
+    return normalizeQuickWaterGuide(saved === null ? null : JSON.parse(saved));
+  } catch (error) {
+    console.warn("かんたん湯量ガイド設定を読み込めませんでした。", error);
+    return { ...DEFAULT_QUICK_WATER_GUIDE };
+  }
+}
+
+function saveQuickWaterGuide() {
+  try {
+    localStorage.setItem(QUICK_WATER_GUIDE_STORAGE_KEY, JSON.stringify(quickWaterGuide));
+  } catch (error) {
+    console.warn("かんたん湯量ガイド設定を保存できませんでした。", error);
   }
 }
 
@@ -417,6 +499,85 @@ function renderMenuSelect() {
   newMenuOption.textContent = "＋ 新規メニューを追加";
   menuSelect.append(newMenuOption);
   menuSelect.value = String(selectedMenuIndex);
+}
+
+function setupQuickWaterGuideOptions() {
+  if (!quickWaterServingsSelect) return;
+  quickWaterServingsSelect.replaceChildren();
+  for (let servings = 1; servings <= 10; servings += 1) {
+    const option = document.createElement("option");
+    option.value = String(servings);
+    option.textContent = `${servings}人分`;
+    quickWaterServingsSelect.append(option);
+  }
+}
+
+function readQuickWaterGuideInputs() {
+  const servings = Number(quickWaterServingsSelect?.value);
+  const beansPerServingGrams = Number(quickWaterBeansInput?.value);
+  const waterPerServingGrams = Number(quickWaterWaterInput?.value);
+  const isValid = (
+    Number.isFinite(servings) &&
+    servings >= 1 &&
+    servings <= 10 &&
+    Number.isFinite(beansPerServingGrams) &&
+    beansPerServingGrams > 0 &&
+    Number.isFinite(waterPerServingGrams) &&
+    waterPerServingGrams > 0
+  );
+
+  return {
+    isValid,
+    guide: {
+      servings,
+      beansPerServingGrams,
+      waterPerServingGrams
+    }
+  };
+}
+
+function renderQuickWaterGuide(syncInputs = true) {
+  if (!quickWaterServingsSelect || !quickWaterCoffee || !quickWaterTotal) return;
+
+  const source = syncInputs ? { isValid: true, guide: quickWaterGuide } : readQuickWaterGuideInputs();
+
+  if (!source.isValid) {
+    quickWaterCoffee.textContent = "-";
+    quickWaterTotal.textContent = "-";
+    if (quickWaterMessage) quickWaterMessage.textContent = "1人分の豆量と湯量は0より大きい数値で入力してください。";
+    return;
+  }
+
+  quickWaterGuide = normalizeQuickWaterGuide(source.guide);
+  const calculated = calculateQuickWaterGuide(quickWaterGuide);
+
+  if (syncInputs) {
+    quickWaterServingsSelect.value = String(calculated.servings);
+    if (quickWaterBeansInput) quickWaterBeansInput.value = String(calculated.beansPerServingGrams);
+    if (quickWaterWaterInput) quickWaterWaterInput.value = String(calculated.waterPerServingGrams);
+  }
+
+  quickWaterCoffee.textContent = `${formatWaterNumber(calculated.coffeeGrams)}g`;
+  quickWaterTotal.textContent = `${formatWaterNumber(calculated.totalWaterGrams)}g`;
+  if (quickWaterMessage) quickWaterMessage.textContent = "";
+}
+
+function setQuickWaterGuideDetailsOpen(isOpen) {
+  if (!quickWaterGuideDetails || !quickWaterGuideToggle) return;
+  quickWaterGuideDetails.hidden = !isOpen;
+  quickWaterGuideToggle.setAttribute("aria-expanded", String(isOpen));
+  quickWaterGuideToggle.setAttribute(
+    "aria-label",
+    isOpen ? "かんたん湯量ガイドの詳細を閉じる" : "かんたん湯量ガイドの詳細を開く"
+  );
+  quickWaterGuideToggle.classList.toggle("is-open", isOpen);
+  if (!isOpen) setQuickWaterDetailsOpen(false);
+}
+
+function setQuickWaterDetailsOpen(isOpen) {
+  if (!quickWaterDetails || !quickWaterDetailsButton) return;
+  quickWaterDetails.hidden = !isOpen;
+  quickWaterDetailsButton.setAttribute("aria-expanded", String(isOpen));
 }
 
 function createNumberInput(value, className, max) {
@@ -692,12 +853,12 @@ function openEditorForMenu(index) {
   updateMenuActionsAvailability();
 }
 
-function startNewMenu() {
+function startNewMenu(initialWaterGuide = null) {
   menuIndexBeforeCreate = selectedMenuIndex;
   editingMenuIndex = null;
   draftMenu = {
     name: "",
-    waterGuide: { ...DEFAULT_WATER_GUIDE },
+    waterGuide: normalizeWaterGuide(initialWaterGuide ?? DEFAULT_WATER_GUIDE),
     steps: [{ name: "蒸らし", minutes: 0, seconds: 30, pourGrams: null }]
   };
   draftMenu = normalizeMenus([{ ...draftMenu, name: "draft" }])[0];
@@ -1293,6 +1454,59 @@ menuNameInput.addEventListener("input", () => {
   editorMessage.textContent = "";
 });
 
+quickWaterServingsSelect?.addEventListener("change", () => {
+  const { isValid, guide } = readQuickWaterGuideInputs();
+  if (!isValid) {
+    renderQuickWaterGuide(false);
+    return;
+  }
+  quickWaterGuide = normalizeQuickWaterGuide(guide);
+  saveQuickWaterGuide();
+  renderQuickWaterGuide(false);
+});
+
+quickWaterBeansInput?.addEventListener("input", () => {
+  const { isValid, guide } = readQuickWaterGuideInputs();
+  if (!isValid) {
+    renderQuickWaterGuide(false);
+    return;
+  }
+  quickWaterGuide = normalizeQuickWaterGuide(guide);
+  saveQuickWaterGuide();
+  renderQuickWaterGuide(false);
+});
+
+quickWaterWaterInput?.addEventListener("input", () => {
+  const { isValid, guide } = readQuickWaterGuideInputs();
+  if (!isValid) {
+    renderQuickWaterGuide(false);
+    return;
+  }
+  quickWaterGuide = normalizeQuickWaterGuide(guide);
+  saveQuickWaterGuide();
+  renderQuickWaterGuide(false);
+});
+
+quickWaterDetailsButton?.addEventListener("click", () => {
+  setQuickWaterDetailsOpen(quickWaterDetails?.hidden ?? true);
+});
+
+quickWaterGuideToggle?.addEventListener("click", () => {
+  setQuickWaterGuideDetailsOpen(quickWaterGuideDetails?.hidden ?? true);
+});
+
+quickWaterCreateMenuButton?.addEventListener("click", () => {
+  const { isValid, guide } = readQuickWaterGuideInputs();
+  if (!isValid) {
+    renderQuickWaterGuide(false);
+    return;
+  }
+  quickWaterGuide = normalizeQuickWaterGuide(guide);
+  saveQuickWaterGuide();
+  renderQuickWaterGuide(false);
+  startNewMenu(createWaterGuideFromQuickGuide(quickWaterGuide));
+});
+
 waterGuideEditor?.addEventListener("change", (event) => {
   const input = event.target.closest('input[name="water-guide-mode"]');
   if (!input || !WATER_GUIDE_MODES.includes(input.value)) return;
@@ -1381,8 +1595,13 @@ saveMenuButton.addEventListener("click", () => {
 
 menus = loadMenus();
 selectedMenuIndex = loadSelectedMenuIndex();
+quickWaterGuide = loadQuickWaterGuide();
 loadSoundSettings();
 renderMenuSelect();
+setupQuickWaterGuideOptions();
+renderQuickWaterGuide();
+setQuickWaterGuideDetailsOpen(false);
+setQuickWaterDetailsOpen(false);
 renderSoundSettings();
 setSoundSettingsOpen(false);
 resetToFirstStep();

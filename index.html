@@ -76,6 +76,74 @@
       </button>
     </div>
 
+    <section id="quick-water-guide" class="quick-water-guide" aria-labelledby="quick-water-guide-title">
+      <div class="quick-water-guide-heading">
+        <h2 id="quick-water-guide-title">かんたん湯量ガイド</h2>
+        <button
+          id="quick-water-guide-toggle"
+          class="quick-water-guide-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="quick-water-guide-details"
+          aria-label="かんたん湯量ガイドの詳細を開く"
+        >
+          <svg class="quick-water-guide-chevron" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m6 9 6 6 6-6"></path>
+          </svg>
+        </button>
+      </div>
+
+      <div class="quick-water-results" aria-live="polite">
+        <div class="quick-water-result">
+          <span>豆</span>
+          <strong id="quick-water-coffee">12g</strong>
+        </div>
+        <div class="quick-water-result">
+          <span>お湯</span>
+          <strong id="quick-water-total">200g</strong>
+        </div>
+      </div>
+
+      <div id="quick-water-guide-details" class="quick-water-guide-details" hidden>
+        <label class="quick-water-servings-field" for="quick-water-servings">
+          <span>人数</span>
+          <select id="quick-water-servings"></select>
+        </label>
+
+        <button
+          id="quick-water-details-button"
+          class="quick-water-details-button"
+          type="button"
+          aria-expanded="false"
+          aria-controls="quick-water-details"
+        >
+          基準を変更
+        </button>
+
+        <div id="quick-water-details" class="quick-water-details" hidden>
+          <label class="quick-water-number-field" for="quick-water-beans-per-serving">
+            <span>1人分の豆量</span>
+            <span class="quick-water-input-shell">
+              <input id="quick-water-beans-per-serving" type="number" min="0.1" step="0.1" inputmode="decimal" />
+              <span>g</span>
+            </span>
+          </label>
+          <label class="quick-water-number-field" for="quick-water-water-per-serving">
+            <span>1人分の湯量</span>
+            <span class="quick-water-input-shell">
+              <input id="quick-water-water-per-serving" type="number" min="0.1" step="1" inputmode="decimal" />
+              <span>g</span>
+            </span>
+          </label>
+        </div>
+
+        <p id="quick-water-message" class="quick-water-message" aria-live="polite"></p>
+        <button id="quick-water-create-menu" class="quick-water-create-menu" type="button">
+          この設定で新規メニューを作成
+        </button>
+      </div>
+    </section>
+
     <div class="bean-memo-actions">
       <button
         id="bean-memo-button"
