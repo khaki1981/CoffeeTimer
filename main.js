@@ -33,6 +33,7 @@ const cancelDeleteMenuButton = document.getElementById("cancel-delete-menu-butto
 const confirmDeleteMenuButton = document.getElementById("confirm-delete-menu-button");
 const menuNameInput = document.getElementById("menu-name");
 const waterGuideEditor = document.getElementById("water-guide-editor");
+const pourModeEditor = document.getElementById("pour-mode-editor");
 const waterGuideFields = document.getElementById("water-guide-fields");
 const waterGuideSummary = document.getElementById("water-guide-summary");
 const waterGuideMessage = document.getElementById("water-guide-message");
@@ -92,6 +93,7 @@ const DEFAULT_BGM_VOLUME = 59;
 const DESKTOP_VOLUME_BOOST = 1.3;
 const WATER_GUIDE_MODES = ["none", "servings", "ratio", "direct"];
 const WATER_DISPLAY_MODES = ["both", "cumulative", "hidden"];
+const POUR_MODES = ["percentage", "grams", "none"];
 const DEFAULT_WATER_GUIDE = {
   mode: "none",
   servings: 1,
@@ -100,7 +102,8 @@ const DEFAULT_WATER_GUIDE = {
   coffeeGrams: 12,
   totalWaterGrams: 200,
   brewRatio: 16.7,
-  displayMode: "both"
+  displayMode: "both",
+  pourMode: "none"
 };
 const DEFAULT_QUICK_WATER_GUIDE = {
   servings: 1,
@@ -113,10 +116,10 @@ const DEFAULT_MENUS = [
     name: "メニュー1",
     waterGuide: { ...DEFAULT_WATER_GUIDE },
     steps: [
-      { name: "蒸らし", minutes: 1, seconds: 0, pourGrams: null },
-      { name: "2投目", minutes: 0, seconds: 30, pourGrams: null },
-      { name: "3投目", minutes: 0, seconds: 30, pourGrams: null },
-      { name: "4投目", minutes: 0, seconds: 30, pourGrams: null }
+      { name: "蒸らし", minutes: 1, seconds: 0, pourPercent: null, pourGrams: null },
+      { name: "2投目", minutes: 0, seconds: 30, pourPercent: null, pourGrams: null },
+      { name: "3投目", minutes: 0, seconds: 30, pourPercent: null, pourGrams: null },
+      { name: "4投目", minutes: 0, seconds: 30, pourPercent: null, pourGrams: null }
     ]
   }
 ];
@@ -167,12 +170,24 @@ function normalizePourGrams(value) {
   return Number.isFinite(grams) && grams >= 0 ? grams : null;
 }
 
+function normalizePourPercent(value) {
+  if (value === undefined || value === null || value === "") return null;
+
+  const percent = Number(value);
+  return Number.isFinite(percent) && percent >= 0 && percent <= 100 ? percent : null;
+}
+
 function normalizeWaterGuide(waterGuide) {
   const source = waterGuide && typeof waterGuide === "object" ? waterGuide : {};
   const mode = WATER_GUIDE_MODES.includes(source.mode) ? source.mode : DEFAULT_WATER_GUIDE.mode;
   const displayMode = WATER_DISPLAY_MODES.includes(source.displayMode)
     ? source.displayMode
     : DEFAULT_WATER_GUIDE.displayMode;
+  const pourMode = POUR_MODES.includes(source.pourMode)
+    ? source.pourMode
+    : mode === "none"
+      ? "none"
+      : "grams";
 
   return {
     mode,
@@ -188,7 +203,8 @@ function normalizeWaterGuide(waterGuide) {
     coffeeGrams: normalizePositiveNumber(source.coffeeGrams, DEFAULT_WATER_GUIDE.coffeeGrams),
     totalWaterGrams: normalizePositiveNumber(source.totalWaterGrams, DEFAULT_WATER_GUIDE.totalWaterGrams),
     brewRatio: normalizePositiveNumber(source.brewRatio, DEFAULT_WATER_GUIDE.brewRatio),
-    displayMode
+    displayMode,
+    pourMode
   };
 }
 
@@ -234,7 +250,8 @@ function createWaterGuideFromQuickGuide(guide) {
     coffeeGrams: calculated.coffeeGrams,
     totalWaterGrams: calculated.totalWaterGrams,
     brewRatio: calculated.brewRatio,
-    displayMode: DEFAULT_WATER_GUIDE.displayMode
+    displayMode: DEFAULT_WATER_GUIDE.displayMode,
+    pourMode: "percentage"
   });
 }
 
@@ -246,6 +263,7 @@ function cloneMenu(menu) {
       name: step.name,
       minutes: step.minutes,
       seconds: step.seconds,
+      pourPercent: normalizePourPercent(step.pourPercent),
       pourGrams: normalizePourGrams(step.pourGrams)
     }))
   };
@@ -302,6 +320,7 @@ function normalizeMenus(value) {
         name: getStepName(index),
         minutes,
         seconds,
+        pourPercent: normalizePourPercent(menu.steps[index]?.pourPercent),
         pourGrams: normalizePourGrams(menu.steps[index]?.pourGrams)
       });
     }
@@ -596,6 +615,11 @@ function formatWaterNumber(value, digits = 0) {
   return digits > 0 ? value.toFixed(digits) : String(Math.round(value));
 }
 
+function formatPercentNumber(value) {
+  if (!Number.isFinite(value)) return "-";
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
 function setWaterGuideValue(key, value) {
   draftMenu.waterGuide = normalizeWaterGuide({
     ...draftMenu.waterGuide,
@@ -618,13 +642,50 @@ function updateWaterGuideCalculatedValues() {
 }
 
 function getStepPourTotal() {
+  if (draftMenu.waterGuide.pourMode === "percentage") {
+    const calculated = calculateStepPourGrams(draftMenu.steps, draftMenu.waterGuide.totalWaterGrams);
+    return calculated.totalGrams;
+  }
   return draftMenu.steps.reduce((sum, step) => sum + (normalizePourGrams(step.pourGrams) ?? 0), 0);
 }
 
 function getStepPourTotalUntil(index) {
+  if (draftMenu.waterGuide.pourMode === "percentage") {
+    const calculated = calculateStepPourGrams(draftMenu.steps, draftMenu.waterGuide.totalWaterGrams);
+    return calculated.items[index]?.cumulativeGrams ?? 0;
+  }
   return draftMenu.steps
     .slice(0, index + 1)
     .reduce((sum, step) => sum + (normalizePourGrams(step.pourGrams) ?? 0), 0);
+}
+
+function calculateStepPourGrams(steps, totalWaterGrams) {
+  const totalWater = normalizePourGrams(totalWaterGrams) ?? 0;
+  const percents = steps.map((step) => normalizePourPercent(step.pourPercent));
+  const percentTotal = percents.reduce((sum, percent) => sum + (percent ?? 0), 0);
+  const isComplete = Math.abs(percentTotal - 100) < 0.001;
+  const lastValidIndex = percents.reduce((lastIndex, percent, index) => (
+    percent === null ? lastIndex : index
+  ), -1);
+  let runningTotal = 0;
+
+  const items = percents.map((percent, index) => {
+    let grams = percent === null ? null : Math.round(totalWater * percent / 100);
+    if (isComplete && index === lastValidIndex) {
+      grams = Math.max(0, totalWater - runningTotal);
+    }
+    if (grams !== null) runningTotal += grams;
+    return {
+      pourGrams: grams,
+      cumulativeGrams: runningTotal
+    };
+  });
+
+  return {
+    items,
+    percentTotal,
+    totalGrams: runningTotal
+  };
 }
 
 function getWaterModeLabel(mode) {
@@ -676,11 +737,57 @@ function createWaterNumberField({ key, label, value, unit, min = "0.1", step = "
   return field;
 }
 
+function renderPourModeEditor(guide) {
+  if (!pourModeEditor) return;
+  pourModeEditor.replaceChildren();
+
+  if (guide.mode === "none") {
+    pourModeEditor.hidden = true;
+    return;
+  }
+
+  pourModeEditor.hidden = false;
+
+  const title = document.createElement("p");
+  title.className = "pour-mode-title";
+  title.textContent = "各工程の注ぐ量";
+
+  const group = document.createElement("div");
+  group.className = "pour-mode-options";
+  group.role = "radiogroup";
+  group.setAttribute("aria-label", "各工程の注ぐ量");
+
+  [
+    ["percentage", "割合で自動計算", "総湯量に追従"],
+    ["grams", "グラムを直接入力", "工程ごとに固定"],
+    ["none", "設定しない", "時間だけ設定"]
+  ].forEach(([value, label, description]) => {
+    const card = document.createElement("label");
+    const input = document.createElement("input");
+    const text = document.createElement("span");
+    const small = document.createElement("small");
+
+    card.className = "water-mode-card pour-mode-card";
+    input.type = "radio";
+    input.name = "water-pour-mode";
+    input.value = value;
+    input.checked = guide.pourMode === value;
+    card.classList.toggle("is-selected", input.checked);
+    text.textContent = label;
+    small.textContent = description;
+    card.append(input, text, small);
+    group.append(card);
+  });
+
+  pourModeEditor.append(title, group);
+}
+
 function renderWaterGuideEditor() {
   if (!waterGuideEditor || !waterGuideFields || !waterGuideSummary || !waterGuideMessage) return;
 
   const guide = updateWaterGuideCalculatedValues();
   waterGuideSummary.textContent = getWaterGuideSummary(guide);
+  renderPourModeEditor(guide);
   waterGuideEditor.querySelectorAll('input[name="water-guide-mode"]').forEach((input) => {
     input.checked = input.value === guide.mode;
     input.closest(".water-mode-card")?.classList.toggle("is-selected", input.checked);
@@ -726,6 +833,61 @@ function renderWaterGuideEditor() {
 }
 
 function renderPourSummary() {
+  if (!waterGuideMessage) return;
+  waterGuideMessage.replaceChildren();
+  waterGuideMessage.classList.remove("is-warning", "is-ok");
+
+  if (draftMenu.waterGuide.mode === "none" || draftMenu.waterGuide.pourMode === "none") {
+    waterGuideMessage.hidden = true;
+    return;
+  }
+
+  waterGuideMessage.hidden = false;
+
+  if (draftMenu.waterGuide.pourMode === "percentage") {
+    const calculated = calculateStepPourGrams(draftMenu.steps, draftMenu.waterGuide.totalWaterGrams);
+    const totalWater = draftMenu.waterGuide.totalWaterGrams;
+    const percentDiff = 100 - calculated.percentTotal;
+    const gramDiff = totalWater - calculated.totalGrams;
+    const isComplete = Math.abs(percentDiff) < 0.001;
+    const summary = document.createElement("p");
+    const totals = document.createElement("p");
+    const actions = document.createElement("div");
+
+    waterGuideMessage.classList.toggle("is-ok", isComplete);
+    waterGuideMessage.classList.toggle("is-warning", !isComplete);
+    summary.textContent = isComplete
+      ? `配分合計 ${formatPercentNumber(calculated.percentTotal)}%`
+      : percentDiff > 0
+        ? `配分合計 ${formatPercentNumber(calculated.percentTotal)}%（あと${formatPercentNumber(percentDiff)}%必要です）`
+        : `配分合計 ${formatPercentNumber(calculated.percentTotal)}%（${formatPercentNumber(Math.abs(percentDiff))}%多く設定されています）`;
+    totals.textContent = isComplete
+      ? `工程合計 ${formatWaterNumber(calculated.totalGrams)}g / 総湯量 ${formatWaterNumber(totalWater)}g`
+      : gramDiff > 0
+        ? `工程合計 ${formatWaterNumber(calculated.totalGrams)}g / 総湯量 ${formatWaterNumber(totalWater)}g（あと${formatWaterNumber(gramDiff)}gです）`
+        : `工程合計 ${formatWaterNumber(calculated.totalGrams)}g / 総湯量 ${formatWaterNumber(totalWater)}g（${formatWaterNumber(Math.abs(gramDiff))}g多いです）`;
+
+    actions.className = "pour-summary-actions";
+    const evenButton = document.createElement("button");
+    evenButton.type = "button";
+    evenButton.className = "secondary-action-button";
+    evenButton.dataset.pourAction = "distribute-evenly";
+    evenButton.textContent = "均等に分ける";
+    actions.append(evenButton);
+
+    if (!isComplete) {
+      const adjustButton = document.createElement("button");
+      adjustButton.type = "button";
+      adjustButton.className = "secondary-action-button";
+      adjustButton.dataset.pourAction = "adjust-last";
+      adjustButton.textContent = "最後の工程を調整";
+      actions.append(adjustButton);
+    }
+
+    waterGuideMessage.append(summary, totals, actions);
+    return;
+  }
+
   if (!waterGuideMessage || draftMenu.waterGuide.mode === "none") {
     if (waterGuideMessage) {
       waterGuideMessage.textContent = "";
@@ -755,13 +917,25 @@ function updateWaterGuideOutput() {
   updateWaterCalculatedField("coffeeGrams", guide.coffeeGrams);
   updateWaterCalculatedField("totalWaterGrams", guide.totalWaterGrams);
   updateWaterCalculatedField("brewRatio", guide.brewRatio);
-  renderPourSummary();
+  updateStepWaterDisplays();
 }
 
 function updateStepWaterDisplays() {
+  const calculated = calculateStepPourGrams(draftMenu.steps, draftMenu.waterGuide.totalWaterGrams);
   stepList.querySelectorAll(".step-row").forEach((row) => {
     const index = Number(row.dataset.stepIndex);
     const cumulative = row.querySelector(".step-cumulative");
+    const calculatedPour = row.querySelector(".step-calculated-pour");
+    if (draftMenu.waterGuide.pourMode === "percentage") {
+      const item = calculated.items[index];
+      if (calculatedPour) {
+        calculatedPour.textContent = item?.pourGrams === null
+          ? "注ぐ量 未設定"
+          : `注ぐ量 ${formatWaterNumber(item?.pourGrams ?? 0)}g`;
+      }
+      if (cumulative) cumulative.textContent = `累計 ${formatWaterNumber(item?.cumulativeGrams ?? 0)}g`;
+      return;
+    }
     if (!cumulative) return;
     const pourValue = normalizePourGrams(draftMenu.steps[index]?.pourGrams);
     cumulative.textContent = pourValue === null
@@ -769,6 +943,61 @@ function updateStepWaterDisplays() {
       : `累計 ${formatWaterNumber(getStepPourTotalUntil(index))}g`;
   });
   renderPourSummary();
+}
+
+function convertStepValuesForPourMode(nextMode) {
+  const currentMode = draftMenu.waterGuide.pourMode;
+  const totalWater = normalizePourGrams(draftMenu.waterGuide.totalWaterGrams);
+
+  if (nextMode === "percentage" && currentMode !== "percentage") {
+    draftMenu.steps = draftMenu.steps.map((step) => {
+      const grams = normalizePourGrams(step.pourGrams);
+      const existingPercent = normalizePourPercent(step.pourPercent);
+      return {
+        ...step,
+        pourPercent: totalWater && grams !== null
+          ? Math.round((grams / totalWater * 100) * 10) / 10
+          : existingPercent ?? 0
+      };
+    });
+  }
+
+  if (nextMode === "grams" && currentMode === "percentage") {
+    const calculated = calculateStepPourGrams(draftMenu.steps, draftMenu.waterGuide.totalWaterGrams);
+    draftMenu.steps = draftMenu.steps.map((step, index) => ({
+      ...step,
+      pourGrams: calculated.items[index]?.pourGrams ?? normalizePourGrams(step.pourGrams)
+    }));
+  }
+
+  draftMenu.waterGuide = normalizeWaterGuide({
+    ...draftMenu.waterGuide,
+    pourMode: nextMode
+  });
+}
+
+function adjustLastStepPercent() {
+  if (draftMenu.steps.length === 0) return false;
+  const lastIndex = draftMenu.steps.length - 1;
+  const previousTotal = draftMenu.steps
+    .slice(0, lastIndex)
+    .reduce((sum, step) => sum + (normalizePourPercent(step.pourPercent) ?? 0), 0);
+  const nextPercent = Math.round((100 - previousTotal) * 10) / 10;
+  if (nextPercent < 0 || nextPercent > 100) return false;
+  draftMenu.steps[lastIndex].pourPercent = nextPercent;
+  return true;
+}
+
+function distributePercentsEvenly() {
+  if (draftMenu.steps.length === 0) return;
+  const base = Math.floor((100 / draftMenu.steps.length) * 10) / 10;
+  let assigned = 0;
+  draftMenu.steps = draftMenu.steps.map((step, index) => {
+    const isLast = index === draftMenu.steps.length - 1;
+    const pourPercent = isLast ? Math.round((100 - assigned) * 10) / 10 : base;
+    assigned += pourPercent;
+    return { ...step, pourPercent };
+  });
 }
 
 function renderDraft() {
@@ -783,7 +1012,11 @@ function renderDraft() {
     const minuteUnit = document.createElement("span");
     const secondUnit = document.createElement("span");
     const deleteButton = document.createElement("button");
-    const showWaterFields = draftMenu.waterGuide.mode !== "none";
+    const pourMode = draftMenu.waterGuide.mode === "none" ? "none" : draftMenu.waterGuide.pourMode;
+    const showWaterFields = pourMode !== "none";
+    const calculated = pourMode === "percentage"
+      ? calculateStepPourGrams(draftMenu.steps, draftMenu.waterGuide.totalWaterGrams)
+      : null;
 
     row.className = "step-row";
     row.dataset.stepIndex = String(index);
@@ -811,7 +1044,7 @@ function renderDraft() {
 
     row.append(name, timeGroup);
 
-    if (showWaterFields) {
+    if (pourMode === "grams") {
       const pourField = document.createElement("label");
       const pourLabel = document.createElement("span");
       const pourInput = document.createElement("input");
@@ -838,6 +1071,40 @@ function renderDraft() {
       row.append(pourField, cumulative);
     }
 
+    if (pourMode === "percentage") {
+      const percentField = document.createElement("label");
+      const percentLabel = document.createElement("span");
+      const percentInput = document.createElement("input");
+      const percentUnit = document.createElement("span");
+      const calculatedPour = document.createElement("span");
+      const cumulative = document.createElement("span");
+      const percentValue = normalizePourPercent(step.pourPercent);
+      const calculatedItem = calculated.items[index];
+
+      percentField.className = "step-pour-field step-percent-field";
+      percentLabel.textContent = "配分";
+      percentInput.type = "number";
+      percentInput.className = "step-pour-percent";
+      percentInput.min = "0";
+      percentInput.max = "100";
+      percentInput.step = "0.1";
+      percentInput.inputMode = "decimal";
+      percentInput.value = percentValue === null ? "" : String(percentValue);
+      percentInput.setAttribute("aria-label", `${getStepName(index)}の配分割合`);
+      percentUnit.className = "unit";
+      percentUnit.textContent = "%";
+      calculatedPour.className = "step-auto-field step-calculated-pour";
+      calculatedPour.setAttribute("aria-label", `${getStepName(index)}の自動計算された注ぐ量`);
+      calculatedPour.textContent = calculatedItem?.pourGrams === null
+        ? "注ぐ量 未設定"
+        : `注ぐ量 ${formatWaterNumber(calculatedItem?.pourGrams ?? 0)}g`;
+      cumulative.className = "step-cumulative";
+      cumulative.textContent = `累計 ${formatWaterNumber(calculatedItem?.cumulativeGrams ?? 0)}g`;
+
+      percentField.append(percentLabel, percentInput, percentUnit);
+      row.append(percentField, calculatedPour, cumulative);
+    }
+
     row.append(deleteButton);
     stepList.append(row);
   });
@@ -856,10 +1123,17 @@ function openEditorForMenu(index) {
 function startNewMenu(initialWaterGuide = null) {
   menuIndexBeforeCreate = selectedMenuIndex;
   editingMenuIndex = null;
+  const waterGuide = normalizeWaterGuide(initialWaterGuide ?? DEFAULT_WATER_GUIDE);
   draftMenu = {
     name: "",
-    waterGuide: normalizeWaterGuide(initialWaterGuide ?? DEFAULT_WATER_GUIDE),
-    steps: [{ name: "蒸らし", minutes: 0, seconds: 30, pourGrams: null }]
+    waterGuide,
+    steps: [{
+      name: "蒸らし",
+      minutes: 0,
+      seconds: 30,
+      pourPercent: waterGuide.pourMode === "percentage" ? 100 : null,
+      pourGrams: null
+    }]
   };
   draftMenu = normalizeMenus([{ ...draftMenu, name: "draft" }])[0];
   draftMenu.name = "";
@@ -1512,8 +1786,17 @@ waterGuideEditor?.addEventListener("change", (event) => {
   if (!input || !WATER_GUIDE_MODES.includes(input.value)) return;
   draftMenu.waterGuide = normalizeWaterGuide({
     ...draftMenu.waterGuide,
-    mode: input.value
+    mode: input.value,
+    pourMode: input.value === "none" ? "none" : draftMenu.waterGuide.pourMode
   });
+  editorMessage.textContent = "";
+  renderDraft();
+});
+
+pourModeEditor?.addEventListener("change", (event) => {
+  const input = event.target.closest('input[name="water-pour-mode"]');
+  if (!input || !POUR_MODES.includes(input.value)) return;
+  convertStepValuesForPourMode(input.value);
   editorMessage.textContent = "";
   renderDraft();
 });
@@ -1537,7 +1820,30 @@ stepList.addEventListener("input", (event) => {
     step.pourGrams = normalizePourGrams(input.value);
     updateStepWaterDisplays();
   }
+  if (input.classList.contains("step-pour-percent")) {
+    step.pourPercent = normalizePourPercent(input.value);
+    updateStepWaterDisplays();
+  }
   editorMessage.textContent = "";
+});
+
+waterGuideMessage?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-pour-action]");
+  if (!button) return;
+  if (button.dataset.pourAction === "distribute-evenly") {
+    distributePercentsEvenly();
+    editorMessage.textContent = "";
+    renderDraft();
+    return;
+  }
+  if (button.dataset.pourAction === "adjust-last") {
+    if (adjustLastStepPercent()) {
+      editorMessage.textContent = "";
+      renderDraft();
+    } else {
+      editorMessage.textContent = "最後の工程だけでは調整できません";
+    }
+  }
 });
 
 stepList.addEventListener("click", (event) => {
@@ -1552,10 +1858,12 @@ stepList.addEventListener("click", (event) => {
 });
 
 addStepButton.addEventListener("click", () => {
+  const pourMode = draftMenu.waterGuide.mode === "none" ? "none" : draftMenu.waterGuide.pourMode;
   draftMenu.steps.push({
     name: getStepName(draftMenu.steps.length),
     minutes: 0,
     seconds: 30,
+    pourPercent: pourMode === "percentage" ? 0 : null,
     pourGrams: null
   });
   renderDraft();

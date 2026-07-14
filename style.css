@@ -656,6 +656,28 @@ input[type="range"] {
   gap: 8px;
 }
 
+.pour-mode-editor {
+  display: grid;
+  gap: 8px;
+}
+
+.pour-mode-editor[hidden] {
+  display: none;
+}
+
+.pour-mode-title {
+  margin: 0;
+  color: #dfc5a9;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pour-mode-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .water-mode-card {
   position: relative;
   display: grid;
@@ -733,13 +755,35 @@ input[type="range"] {
 }
 
 .water-guide-message {
+  display: grid;
+  gap: 8px;
   padding: 8px 10px;
   border-radius: 8px;
   background: #211915;
 }
 
-.water-guide-message:empty {
+.water-guide-message:empty,
+.water-guide-message[hidden] {
   display: none;
+}
+
+.water-guide-message p {
+  margin: 0;
+}
+
+.pour-summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.secondary-action-button {
+  min-height: 38px;
+  padding: 8px 10px;
+  border-color: #6f5949;
+  color: #dfc5a9;
+  background: #17110e;
+  font-size: 0.74rem;
 }
 
 .water-guide-message.is-ok {
@@ -810,6 +854,11 @@ input[type="range"] {
   color: #9ab08b;
   font-size: 0.74rem;
   justify-self: end;
+}
+
+.step-auto-field {
+  color: #b9a18f;
+  font-size: 0.74rem;
 }
 
 .step-row input,
@@ -1281,6 +1330,7 @@ input[type="range"] {
   }
 
   .water-mode-options,
+  .pour-mode-options,
   .water-guide-fields {
     grid-template-columns: 1fr;
   }
@@ -1295,6 +1345,7 @@ input[type="range"] {
   }
 
   .step-row.has-water .step-pour-field,
+  .step-row.has-water .step-auto-field,
   .step-row.has-water .step-cumulative {
     grid-column: 1 / -1;
   }
@@ -1996,7 +2047,8 @@ body.is-running #pause-button {
 .water-guide-note,
 .water-guide-message,
 .water-field,
-.step-pour-field {
+.step-pour-field,
+.step-auto-field {
   color: var(--text-muted);
 }
 
@@ -2041,6 +2093,16 @@ body.is-running #pause-button {
 .water-guide-message.is-warning {
   color: var(--terracotta);
   background: var(--terracotta-soft);
+}
+
+.pour-mode-title {
+  color: var(--text-heading);
+}
+
+.secondary-action-button {
+  border-color: var(--border-strong);
+  color: var(--text-heading);
+  background: var(--paper);
 }
 
 #alert-sound,
