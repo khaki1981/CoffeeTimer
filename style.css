@@ -168,10 +168,7 @@ h1 {
 .quick-water-guide-toggle:focus-visible,
 .quick-water-servings-field select:focus-visible,
 .quick-water-input-shell input:focus-visible,
-.quick-water-details-button:focus-visible,
-.quick-water-create-menu:focus-visible,
 .water-mode-card:focus-within,
-.water-input-shell input:focus-visible,
 .step-row input:focus-visible,
 .menu-name-field input:focus-visible,
 .delete-button:focus-visible {
@@ -561,24 +558,36 @@ input[type="range"] {
   display: none;
 }
 
-.quick-water-details-button,
-.quick-water-create-menu {
-  min-height: 44px;
-  padding: 9px 12px;
-}
-
-.quick-water-create-menu {
-  color: #251912;
-  background: #c99463;
-}
-
-.quick-water-details {
+.quick-water-input-fields {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
-.quick-water-details[hidden] {
+.quick-water-input-fields[hidden] {
   display: none;
+}
+
+.quick-water-mode-fieldset {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.quick-water-mode-fieldset legend {
+  margin-bottom: 6px;
+  color: #b9a18f;
+  font-size: 0.76rem;
+}
+
+.water-mode-options.quick-water-mode-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quick-water-mode-options .water-mode-card {
+  min-height: 44px;
+  place-items: center;
+  text-align: center;
 }
 
 .quick-water-input-shell {
@@ -611,70 +620,9 @@ input[type="range"] {
   font-size: 0.76rem;
 }
 
-.water-guide-editor {
-  display: grid;
-  gap: 10px;
-  margin-top: 14px;
-  padding: 12px;
-  border: 1px solid #49372d;
-  border-radius: 10px;
-  background: #17110e;
-}
-
-.water-guide-heading {
-  display: flex;
-  gap: 10px;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.water-guide-heading h3 {
-  margin: 0;
-  color: #dfc5a9;
-  font-size: 0.95rem;
-}
-
-.water-guide-summary {
-  margin: 0;
-  color: #b9a18f;
-  font-size: 0.74rem;
-  text-align: right;
-}
-
-.water-guide-help,
-.water-guide-note,
-.water-guide-message {
-  margin: 0;
-  color: #9f8a79;
-  font-size: 0.74rem;
-  line-height: 1.6;
-}
-
 .water-mode-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.pour-mode-editor {
-  display: grid;
-  gap: 8px;
-}
-
-.pour-mode-editor[hidden] {
-  display: none;
-}
-
-.pour-mode-title {
-  margin: 0;
-  color: #dfc5a9;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.pour-mode-options {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -713,89 +661,6 @@ input[type="range"] {
   background: #1e261c;
 }
 
-.water-guide-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.water-field {
-  display: grid;
-  gap: 5px;
-  color: #b9a18f;
-  font-size: 0.72rem;
-}
-
-.water-input-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 6px;
-  align-items: center;
-}
-
-.water-input-shell input {
-  width: 100%;
-  min-width: 0;
-  padding: 9px 8px;
-  border: 1px solid #554035;
-  border-radius: 8px;
-  color: #f0e3d5;
-  background: #110e0c;
-}
-
-.water-field.is-readonly input {
-  color: #d7c6b4;
-  background: #221914;
-}
-
-.water-unit {
-  min-width: 14px;
-  color: #9f8a79;
-  font-size: 0.72rem;
-}
-
-.water-guide-message {
-  display: grid;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: #211915;
-}
-
-.water-guide-message:empty,
-.water-guide-message[hidden] {
-  display: none;
-}
-
-.water-guide-message p {
-  margin: 0;
-}
-
-.pour-summary-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.secondary-action-button {
-  min-height: 38px;
-  padding: 8px 10px;
-  border-color: #6f5949;
-  color: #dfc5a9;
-  background: #17110e;
-  font-size: 0.74rem;
-}
-
-.water-guide-message.is-ok {
-  color: #c8dfbd;
-  background: #1e261c;
-}
-
-.water-guide-message.is-warning {
-  color: #efc4a6;
-  background: #2b1d16;
-}
-
 .step-list {
   display: grid;
   gap: 8px;
@@ -810,11 +675,6 @@ input[type="range"] {
   padding-bottom: 8px;
   border-bottom: 1px dashed #49372d;
 }
-
-.step-row.has-water {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
 .step-name {
   color: #dfc5a9;
   font-size: 0.85rem;
@@ -826,41 +686,6 @@ input[type="range"] {
   gap: 6px;
   align-items: center;
 }
-
-.step-row.has-water .step-name {
-  grid-column: 1 / 2;
-}
-
-.step-row.has-water .delete-button {
-  grid-column: 2 / 3;
-  grid-row: 1;
-  justify-self: end;
-}
-
-.step-row.has-water .step-time-fields {
-  grid-column: 1 / -1;
-}
-
-.step-pour-field {
-  display: grid;
-  grid-template-columns: auto minmax(72px, 96px) auto;
-  gap: 6px;
-  align-items: center;
-  color: #b9a18f;
-  font-size: 0.74rem;
-}
-
-.step-cumulative {
-  color: #9ab08b;
-  font-size: 0.74rem;
-  justify-self: end;
-}
-
-.step-auto-field {
-  color: #b9a18f;
-  font-size: 0.74rem;
-}
-
 .step-row input,
 .menu-name-field input {
   width: 100%;
@@ -1320,38 +1145,9 @@ input[type="range"] {
     gap: 4px;
   }
 
-  .water-guide-heading {
-    display: grid;
-    gap: 4px;
-  }
-
-  .water-guide-summary {
-    text-align: left;
-  }
-
-  .water-mode-options,
-  .pour-mode-options,
-  .water-guide-fields {
-    grid-template-columns: 1fr;
-  }
-
   .step-time-fields {
     grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) 12px;
     grid-column: 1 / -1;
-  }
-
-  .step-row.has-water {
-    grid-template-columns: 1fr auto;
-  }
-
-  .step-row.has-water .step-pour-field,
-  .step-row.has-water .step-auto-field,
-  .step-row.has-water .step-cumulative {
-    grid-column: 1 / -1;
-  }
-
-  .step-cumulative {
-    justify-self: start;
   }
 
   .delete-button {
@@ -1359,10 +1155,6 @@ input[type="range"] {
     min-height: 32px;
   }
 
-  .step-row.has-water .delete-button {
-    grid-column: 2 / 3;
-    grid-row: 1;
-  }
 }
 
 .menu-actions {
@@ -1897,7 +1689,8 @@ body.is-running #pause-button {
 
 .quick-water-message,
 .quick-water-servings-field,
-.quick-water-number-field {
+.quick-water-number-field,
+.quick-water-mode-fieldset legend {
   color: var(--text-muted);
 }
 
@@ -1936,8 +1729,6 @@ body.is-running #pause-button {
 .memo-button,
 .text-button,
 .add-step-button,
-.quick-water-details-button,
-.quick-water-create-menu,
 .sound-close-text-button {
   border: 1.5px solid var(--wood-600);
   border-radius: var(--radius-md);
@@ -1954,21 +1745,10 @@ body.is-running #pause-button {
 .memo-button:hover,
 .text-button:hover,
 .add-step-button:hover,
-.quick-water-details-button:hover,
 .sound-close-text-button:hover {
   background: var(--wood-soft);
 }
 
-.quick-water-create-menu {
-  border-color: var(--wood-600);
-  color: var(--text-on-brown);
-  background: var(--wood-600);
-  font-weight: 800;
-}
-
-.quick-water-create-menu:hover {
-  background: #5b3e2d;
-}
 
 .bean-memo-actions {
   margin: 0;
@@ -2031,78 +1811,15 @@ body.is-running #pause-button {
   font-weight: 700;
 }
 
-.water-guide-editor {
-  border-color: var(--border-line);
-  border-radius: var(--radius-md);
-  background: var(--paper);
-  box-shadow: var(--shadow-button);
-}
-
-.water-guide-heading h3 {
-  color: var(--text-heading);
-}
-
-.water-guide-summary,
-.water-guide-help,
-.water-guide-note,
-.water-guide-message,
-.water-field,
-.step-pour-field,
-.step-auto-field {
-  color: var(--text-muted);
-}
-
 .water-mode-card {
   border-color: var(--border-strong);
   color: var(--text-heading);
   background: var(--paper);
 }
 
-.water-mode-card small,
-.water-unit,
-.step-cumulative {
-  color: var(--text-muted);
-}
-
 .water-mode-card.is-selected {
   border-color: var(--sage);
   background: var(--sage-soft);
-}
-
-.water-input-shell input {
-  border: 1.5px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-body);
-  background: var(--paper);
-}
-
-.water-field.is-readonly input {
-  color: var(--text-heading);
-  background: var(--greige);
-}
-
-.water-guide-message {
-  background: var(--greige);
-}
-
-.water-guide-message.is-ok {
-  color: var(--sage-text);
-  background: var(--sage-soft);
-}
-
-.water-guide-message.is-warning {
-  color: var(--terracotta);
-  background: var(--terracotta-soft);
-}
-
-.pour-mode-title {
-  color: var(--text-heading);
-}
-
-.secondary-action-button {
-  border-color: var(--border-strong);
-  color: var(--text-heading);
-  background: var(--paper);
 }
 
 #alert-sound,
@@ -2215,10 +1932,7 @@ textarea:disabled {
 .quick-water-guide-toggle:focus-visible,
 .quick-water-servings-field select:focus-visible,
 .quick-water-input-shell input:focus-visible,
-.quick-water-details-button:focus-visible,
-.quick-water-create-menu:focus-visible,
 .water-mode-card:focus-within,
-.water-input-shell input:focus-visible,
 .step-row input:focus-visible,
 .menu-name-field input:focus-visible,
 .delete-button:focus-visible {

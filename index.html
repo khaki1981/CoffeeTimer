@@ -105,22 +105,29 @@
       </div>
 
       <div id="quick-water-guide-details" class="quick-water-guide-details" hidden>
-        <label class="quick-water-servings-field" for="quick-water-servings">
-          <span>人数</span>
-          <select id="quick-water-servings"></select>
-        </label>
+        <fieldset class="quick-water-mode-fieldset">
+          <legend>計算方法</legend>
+          <div class="water-mode-options quick-water-mode-options">
+            <label class="water-mode-card">
+              <input type="radio" name="quick-water-mode" value="servings" />
+              <span>人数から</span>
+            </label>
+            <label class="water-mode-card">
+              <input type="radio" name="quick-water-mode" value="ratio" />
+              <span>比率から</span>
+            </label>
+            <label class="water-mode-card">
+              <input type="radio" name="quick-water-mode" value="direct" />
+              <span>直接指定</span>
+            </label>
+          </div>
+        </fieldset>
 
-        <button
-          id="quick-water-details-button"
-          class="quick-water-details-button"
-          type="button"
-          aria-expanded="false"
-          aria-controls="quick-water-details"
-        >
-          基準を変更
-        </button>
-
-        <div id="quick-water-details" class="quick-water-details" hidden>
+        <div id="quick-water-servings-fields" class="quick-water-input-fields">
+          <label class="quick-water-servings-field" for="quick-water-servings">
+            <span>人数</span>
+            <select id="quick-water-servings"></select>
+          </label>
           <label class="quick-water-number-field" for="quick-water-beans-per-serving">
             <span>1人分の豆量</span>
             <span class="quick-water-input-shell">
@@ -137,10 +144,41 @@
           </label>
         </div>
 
+        <div id="quick-water-ratio-fields" class="quick-water-input-fields" hidden>
+          <label class="quick-water-number-field" for="quick-water-ratio-coffee">
+            <span>豆量</span>
+            <span class="quick-water-input-shell">
+              <input id="quick-water-ratio-coffee" type="number" min="0.1" step="0.1" inputmode="decimal" />
+              <span>g</span>
+            </span>
+          </label>
+          <label class="quick-water-number-field" for="quick-water-brew-ratio">
+            <span>抽出比率（1 :）</span>
+            <span class="quick-water-input-shell">
+              <input id="quick-water-brew-ratio" type="number" min="0.1" step="0.1" inputmode="decimal" />
+              <span>倍</span>
+            </span>
+          </label>
+        </div>
+
+        <div id="quick-water-direct-fields" class="quick-water-input-fields" hidden>
+          <label class="quick-water-number-field" for="quick-water-direct-coffee">
+            <span>豆量</span>
+            <span class="quick-water-input-shell">
+              <input id="quick-water-direct-coffee" type="number" min="0.1" step="0.1" inputmode="decimal" />
+              <span>g</span>
+            </span>
+          </label>
+          <label class="quick-water-number-field" for="quick-water-direct-total">
+            <span>総湯量</span>
+            <span class="quick-water-input-shell">
+              <input id="quick-water-direct-total" type="number" min="0.1" step="1" inputmode="decimal" />
+              <span>g</span>
+            </span>
+          </label>
+        </div>
+
         <p id="quick-water-message" class="quick-water-message" aria-live="polite"></p>
-        <button id="quick-water-create-menu" class="quick-water-create-menu" type="button">
-          この設定で新規メニューを作成
-        </button>
       </div>
     </section>
 
@@ -258,39 +296,6 @@
         <span>メニュー名</span>
         <input id="menu-name" type="text" maxlength="30" required />
       </label>
-
-      <section id="water-guide-editor" class="water-guide-editor" aria-labelledby="water-guide-title">
-        <div class="water-guide-heading">
-          <h3 id="water-guide-title">湯量ガイド</h3>
-          <p id="water-guide-summary" class="water-guide-summary">使わない</p>
-        </div>
-        <p class="water-guide-help">豆とお湯の量を設定し、各工程の注湯量を確認できます。</p>
-        <div class="water-mode-options" role="radiogroup" aria-label="湯量の決め方">
-          <label class="water-mode-card">
-            <input type="radio" name="water-guide-mode" value="servings" />
-            <span>人数から</span>
-            <small>人数×1人分</small>
-          </label>
-          <label class="water-mode-card">
-            <input type="radio" name="water-guide-mode" value="ratio" />
-            <span>比率から</span>
-            <small>豆量×比率</small>
-          </label>
-          <label class="water-mode-card">
-            <input type="radio" name="water-guide-mode" value="direct" />
-            <span>豆量と湯量</span>
-            <small>直接指定</small>
-          </label>
-          <label class="water-mode-card">
-            <input type="radio" name="water-guide-mode" value="none" />
-            <span>使わない</span>
-            <small>時間だけ設定</small>
-          </label>
-        </div>
-        <div id="pour-mode-editor" class="pour-mode-editor"></div>
-        <div id="water-guide-fields" class="water-guide-fields"></div>
-        <div id="water-guide-message" class="water-guide-message" aria-live="polite"></div>
-      </section>
 
       <div id="step-list" class="step-list"></div>
 
