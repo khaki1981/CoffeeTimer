@@ -676,6 +676,8 @@ input[type="range"] {
   border-bottom: 1px dashed #49372d;
 }
 .step-name {
+  grid-column: 1 / 2;
+  grid-row: 1;
   color: #dfc5a9;
   font-size: 0.85rem;
 }
@@ -685,7 +687,25 @@ input[type="range"] {
   grid-template-columns: 66px 15px 66px 15px;
   gap: 6px;
   align-items: center;
+  grid-column: 2 / 3;
+  grid-row: 1;
 }
+
+.step-pour-field {
+  display: grid;
+  grid-template-columns: auto minmax(72px, 96px) 15px;
+  grid-column: 2 / 3;
+  grid-row: 2;
+  gap: 6px;
+  align-items: center;
+  color: #b9a18f;
+  font-size: 0.74rem;
+}
+
+.step-pour-label {
+  white-space: nowrap;
+}
+
 .step-row input,
 .menu-name-field input {
   width: 100%;
@@ -703,6 +723,8 @@ input[type="range"] {
 }
 
 .delete-button {
+  grid-column: 3 / 4;
+  grid-row: 1;
   min-height: 38px;
   padding: 7px 8px;
   color: #d7a99b;
@@ -1148,11 +1170,19 @@ input[type="range"] {
   .step-time-fields {
     grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) 12px;
     grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .step-pour-field {
+    grid-template-columns: auto minmax(0, 1fr) 12px;
+    grid-column: 1 / -1;
+    grid-row: 3;
   }
 
   .delete-button {
-    grid-column: 1 / -1;
-    min-height: 32px;
+    grid-column: 2 / 3;
+    grid-row: 1;
+    min-height: 38px;
   }
 
 }
@@ -1801,6 +1831,7 @@ body.is-running #pause-button {
 .bean-card-meta,
 .bean-card-rating,
 .unit,
+.step-pour-field,
 .bean-empty,
 .flavor-tag.empty {
   color: var(--text-muted);

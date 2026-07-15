@@ -648,6 +648,11 @@ function renderDraft() {
     const row = document.createElement("div");
     const name = document.createElement("span");
     const timeGroup = document.createElement("div");
+    const pourField = document.createElement("label");
+    const pourLabel = document.createElement("span");
+    const pourInput = document.createElement("input");
+    const pourUnit = document.createElement("span");
+    const pourGrams = normalizePourGrams(step.pourGrams);
     const minuteUnit = document.createElement("span");
     const secondUnit = document.createElement("span");
     const deleteButton = document.createElement("button");
@@ -661,6 +666,18 @@ function renderDraft() {
     minuteUnit.textContent = "分";
     secondUnit.className = "unit";
     secondUnit.textContent = "秒";
+    pourField.className = "step-pour-field";
+    pourLabel.className = "step-pour-label";
+    pourLabel.textContent = "湯量";
+    pourInput.type = "number";
+    pourInput.className = "step-pour-grams";
+    pourInput.min = "0";
+    pourInput.step = "0.1";
+    pourInput.inputMode = "decimal";
+    pourInput.value = pourGrams === null ? "" : String(pourGrams);
+    pourInput.setAttribute("aria-label", `${getStepName(index)}の湯量`);
+    pourUnit.className = "unit";
+    pourUnit.textContent = "g";
 
     deleteButton.type = "button";
     deleteButton.className = "delete-button";
@@ -675,7 +692,8 @@ function renderDraft() {
       secondUnit
     );
 
-    row.append(name, timeGroup);
+    pourField.append(pourLabel, pourInput, pourUnit);
+    row.append(name, timeGroup, pourField);
 
     row.append(deleteButton);
     stepList.append(row);
@@ -1342,6 +1360,7 @@ stepList.addEventListener("input", (event) => {
   const step = draftMenu.steps[Number(row.dataset.stepIndex)];
   if (input.classList.contains("step-minutes")) step.minutes = Number(input.value);
   if (input.classList.contains("step-seconds")) step.seconds = Number(input.value);
+  if (input.classList.contains("step-pour-grams")) step.pourGrams = normalizePourGrams(input.value);
   editorMessage.textContent = "";
 });
 
