@@ -169,6 +169,7 @@ h1 {
 .quick-water-servings-field select:focus-visible,
 .quick-water-input-shell input:focus-visible,
 .water-mode-card:focus-within,
+.bottom-nav-button:focus-visible,
 .step-row input:focus-visible,
 .menu-name-field input:focus-visible,
 .delete-button:focus-visible {
@@ -1433,7 +1434,7 @@ input[type="range"] {
 body {
   display: grid;
   place-items: start center;
-  padding: 24px 16px 40px;
+  padding: 24px 16px calc(112px + env(safe-area-inset-bottom));
   color: var(--text-body);
   background: var(--ivory);
   line-height: 1.7;
@@ -1457,7 +1458,7 @@ input {
 .app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   padding: 0 4px;
   margin-bottom: 14px;
@@ -1540,6 +1541,41 @@ h1 {
   text-align: center;
 }
 
+.timer-pour-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+  margin: 0.25rem 0;
+  color: var(--sage-text);
+  white-space: nowrap;
+}
+
+.timer-pour-display[hidden] {
+  display: none;
+}
+
+.timer-pour-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.timer-pour-value {
+  color: var(--sage-text);
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.timer-pour-unit {
+  color: var(--sage-text);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
 body.is-running .status {
   color: var(--sage-text);
   font-weight: 700;
@@ -1591,10 +1627,30 @@ body.is-running .status::before {
   font-weight: 700;
 }
 
+.progress-chip.current.is-pulsing {
+  animation: active-step-pulse 2.1s ease-in-out infinite;
+  transform-origin: center;
+}
+
 .progress-chip.done {
   border-color: var(--sage-soft);
   color: var(--sage-text);
   background: var(--sage-soft);
+}
+
+@keyframes active-step-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(107, 74, 54, 0);
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 0 4px rgba(107, 74, 54, 0.08);
+    opacity: 0.88;
+    transform: scale(1.03);
+  }
 }
 
 .progress-track {
@@ -1689,8 +1745,8 @@ body.is-running #pause-button {
 }
 
 .step-selector {
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
 
 .preset-field::after {
@@ -1703,6 +1759,74 @@ body.is-running #pause-button {
   border-radius: var(--radius-sm);
   color: var(--text-body);
   background: var(--paper);
+}
+
+.app-bottom-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 2px;
+  padding: 8px max(12px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
+  border-top: 1px solid rgba(107, 74, 54, 0.13);
+  background: rgba(255, 254, 250, 0.96);
+  box-shadow: 0 -8px 24px rgba(63, 48, 40, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.bottom-nav-button {
+  display: grid;
+  min-width: 0;
+  min-height: 52px;
+  place-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.bottom-nav-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.bottom-nav-button.is-active {
+  color: var(--wood-600);
+}
+
+.bottom-nav-button[aria-current] {
+  background: var(--wood-soft);
+}
+
+.bottom-nav-primary {
+  gap: 4px;
+  min-height: 68px;
+  margin-top: -22px;
+  color: var(--wood-600);
+}
+
+.bottom-nav-primary-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-on-brown);
+  background: var(--wood-600);
+  box-shadow: 0 8px 18px rgba(107, 74, 54, 0.22);
+}
+
+.bottom-nav-primary.is-active .bottom-nav-primary-icon,
+.bottom-nav-primary[aria-current] .bottom-nav-primary-icon {
+  background: var(--wood-700);
 }
 
 .quick-water-guide {
@@ -1978,7 +2102,7 @@ textarea:disabled {
 
 @media (max-width: 430px) {
   body {
-    padding: 14px 16px 32px;
+    padding: 14px 16px calc(108px + env(safe-area-inset-bottom));
   }
 
   .layout-timer {
@@ -1996,7 +2120,7 @@ textarea:disabled {
 
 @media (min-width: 920px) {
   body {
-    padding: 48px 32px;
+    padding: 48px 32px calc(116px + env(safe-area-inset-bottom));
   }
 
   .timer-card {
@@ -2037,6 +2161,10 @@ textarea:disabled {
   .progress-bar-fill,
   .progress-chip {
     transition: none;
+  }
+
+  .progress-chip.current.is-pulsing {
+    animation: none;
   }
 }
 

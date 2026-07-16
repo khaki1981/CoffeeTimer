@@ -1,6 +1,8 @@
 const display = document.getElementById("time-display");
 const currentStepText = document.getElementById("current-step");
 const statusText = document.getElementById("status-text");
+const pourDisplay = document.getElementById("pour-display");
+const pourDisplayValue = document.getElementById("pour-display-value");
 const menuSelect = document.getElementById("timer-preset");
 const startButton = document.getElementById("start-button");
 const pauseButton = document.getElementById("pause-button");
@@ -10,6 +12,9 @@ const soundSettings = document.getElementById("sound-settings");
 const soundSettingsClose = document.getElementById("sound-settings-close");
 const soundSettingsCloseBottom = document.getElementById("sound-settings-close-bottom");
 const editButton = document.getElementById("edit-button");
+const homeNavButton = document.getElementById("home-nav-button");
+const beanMemoButton = document.getElementById("bean-memo-button");
+const beanMemoPanel = document.getElementById("bean-memo-panel");
 const quickWaterGuideToggle = document.getElementById("quick-water-guide-toggle");
 const quickWaterGuideDetails = document.getElementById("quick-water-guide-details");
 const quickWaterServingsSelect = document.getElementById("quick-water-servings");
@@ -293,11 +298,33 @@ function formatTime(totalSeconds) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function updateCurrentPourDisplay(step) {
+  if (!pourDisplay || !pourDisplayValue) return;
+
+  const rawPourGrams = step?.pourGrams;
+  const pourGrams = Number(rawPourGrams);
+  const hasPourGrams = rawPourGrams !== null &&
+    rawPourGrams !== undefined &&
+    rawPourGrams !== "" &&
+    Number.isFinite(pourGrams) &&
+    pourGrams >= 0;
+
+  if (!hasPourGrams) {
+    pourDisplay.hidden = true;
+    pourDisplayValue.textContent = "";
+    return;
+  }
+
+  pourDisplayValue.textContent = String(pourGrams);
+  pourDisplay.hidden = false;
+}
+
 function updateDisplay() {
   const currentStep = menus[selectedMenuIndex].steps[currentStepIndex];
   display.textContent = formatTime(remainingSeconds);
   display.dateTime = `PT${remainingSeconds}S`;
   currentStepText.textContent = `現在：${currentStep.name}`;
+  updateCurrentPourDisplay(currentStep);
 }
 
 // localStorageの値を検証し、壊れている場合はnullを返します。
@@ -496,6 +523,7 @@ function setSoundSettingsOpen(isOpen) {
   soundSettings.hidden = !isOpen;
   soundSettingsButton.setAttribute("aria-expanded", String(isOpen));
   soundSettingsButton.setAttribute("aria-label", isOpen ? "音設定を閉じる" : "音設定を開く");
+  updateBottomNavState();
 }
 
 function stopInterval() {
@@ -737,7 +765,46 @@ function setEditorOpen(isOpen) {
   if (!isOpen) closeMenuActions();
   editor.hidden = !isOpen;
   editButton.setAttribute("aria-expanded", String(isOpen));
-  editButton.textContent = isOpen ? "閉じる" : "編集";
+  updateBottomNavState();
+}
+
+function setBeanMemoOpenFromNav(isOpen) {
+  if (!beanMemoPanel || !beanMemoButton) return;
+  beanMemoPanel.hidden = !isOpen;
+  beanMemoButton.setAttribute("aria-expanded", String(isOpen));
+}
+
+function updateBottomNavState() {
+  const isMenuOpen = !editor.hidden;
+  const isSoundOpen = !soundSettings.hidden;
+  const isBeanMemoOpen = Boolean(beanMemoPanel && !beanMemoPanel.hidden);
+  const isTimerActive = !isMenuOpen && !isSoundOpen && !isBeanMemoOpen;
+  const setCurrent = (button, isCurrent) => {
+    if (!button) return;
+    if (isCurrent) {
+      button.setAttribute("aria-current", "page");
+    } else {
+      button.removeAttribute("aria-current");
+    }
+  };
+
+  homeNavButton?.classList.toggle("is-active", isTimerActive);
+  beanMemoButton?.classList.toggle("is-active", isBeanMemoOpen);
+  editButton?.classList.toggle("is-active", isMenuOpen);
+  soundSettingsButton?.classList.toggle("is-active", isSoundOpen);
+
+  setCurrent(homeNavButton, isTimerActive);
+  setCurrent(beanMemoButton, isBeanMemoOpen);
+  setCurrent(editButton, isMenuOpen);
+  setCurrent(soundSettingsButton, isSoundOpen);
+}
+
+function showTimerHome() {
+  setSoundSettingsOpen(false);
+  setEditorOpen(false);
+  setBeanMemoOpenFromNav(false);
+  updateBottomNavState();
+  document.querySelector(".layout-timer")?.scrollIntoView({ block: "start", behavior: "smooth" });
 }
 
 function updateMenuActionsAvailability() {
@@ -1159,8 +1226,15 @@ startButton.addEventListener("click", startTimer);
 pauseButton.addEventListener("click", pauseTimer);
 resetButton.addEventListener("click", resetToFirstStep);
 
+homeNavButton?.addEventListener("click", showTimerHome);
+
 soundSettingsButton.addEventListener("click", () => {
-  setSoundSettingsOpen(soundSettings.hidden);
+  const willOpen = soundSettings.hidden;
+  if (willOpen) {
+    setEditorOpen(false);
+    setBeanMemoOpenFromNav(false);
+  }
+  setSoundSettingsOpen(willOpen);
 });
 
 soundSettingsClose.addEventListener("click", () => setSoundSettingsOpen(false));
@@ -1225,11 +1299,19 @@ bgmTrackSelect.addEventListener("change", () => {
 editButton.addEventListener("click", () => {
   const willOpen = editor.hidden;
   if (willOpen) {
+    setSoundSettingsOpen(false);
+    setBeanMemoOpenFromNav(false);
     openEditorForMenu(selectedMenuIndex);
     setEditorOpen(true);
   } else {
     closeEditor();
   }
+});
+
+beanMemoButton?.addEventListener("click", () => {
+  setSoundSettingsOpen(false);
+  setEditorOpen(false);
+  window.setTimeout(updateBottomNavState, 0);
 });
 
 menuActionsButton.addEventListener("click", () => {

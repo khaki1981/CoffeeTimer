@@ -60,7 +60,8 @@
       const chip = document.createElement("span");
       const isDone = state === "done" || index < currentIndex;
       const isCurrent = index === currentIndex && state !== "done";
-      chip.className = `progress-chip${isDone ? " done" : ""}${isCurrent ? " current" : ""}`;
+      const isPulsing = state === "running" && isCurrent;
+      chip.className = `progress-chip${isDone ? " done" : ""}${isCurrent ? " current" : ""}${isPulsing ? " is-pulsing" : ""}`;
       chip.textContent = step.name;
       chipsEl.append(chip);
     });
